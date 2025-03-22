@@ -45,6 +45,7 @@
 
 #include <filesystem>
 #include <iostream>
+#include <map>
 #include <string>
 #include <vector>
 
@@ -52,56 +53,102 @@
 
 using namespace std;
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv)
+{
     int device_count = 0;
     hipError_t error = hipSuccess;
     error = hipGetDeviceCount(&device_count);
-    if (error != hipSuccess) {
+    if (error != hipSuccess)
+    {
         std::cout << "no hip device found" << std::endl;
         return -1;
-    } else {
+    }
+    else
+    {
         std::cout << device_count << " devices found " << std::endl;
     }
 
     std::vector<std::string> bus_ids;
-    for (int i = 0; i < device_count; i++) {
+    std::vector<std::string> bus_ids_path;
+
+    for (int i = 0; i < device_count; i++)
+    {
         char id[100] = {0};
         error = hipDeviceGetPCIBusId(id, 100, i);
-        if (error != hipSuccess) {
+        if (error != hipSuccess)
+        {
             std::cout << "get device " << i << " bus failed " << std::endl;
-        } else {
+        }
+        else
+        {
             std::cout << "device " << i << ", bus id = " << id << std::endl;
         }
         bus_ids.push_back(std::string(id));
     }
     std::string device_base_path = "/sys/bus/pci/devices/";
-    for (size_t i = 0; i < bus_ids.size(); i++) {
+    for (size_t i = 0; i < bus_ids.size(); i++)
+    {
         auto tmp = device_base_path + bus_ids[i];
 
         char real_path[1024] = {0};
-        if (realpath(tmp.data(), real_path) == NULL) {
+        if (realpath(tmp.data(), real_path) == NULL)
+        {
             std::cout << "get real path failed " << i << " : " << bus_ids[i] << std::endl;
             continue;
         }
-        bus_ids[i] = std::string(real_path);
-
-        std::cout << bus_ids[i] << std::endl;
+        bus_ids_path.push_back(std::string(real_path));
     }
 
     std::string nic_base_path = "/sys/class/infiniband/bnxt_re";
     std::vector<std::string> nic_ids;
-    for (size_t i = 0; i < 8; i++) {
+    std::vector<std::string> nic_ids_path;
+
+    for (size_t i = 0; i < 8; i++)
+    {
         std::string tmp = nic_base_path + std::to_string(i);
         char real_path[1024] = {0};
-        if (realpath(tmp.data(), real_path) == NULL) {
+        if (realpath(tmp.data(), real_path) == NULL)
+        {
             std::cout << "get real path failed " << i << " : " << tmp << std::endl;
             continue;
         }
-        nic_ids[i] = std::string(real_path);
-        std::cout << nic_ids[i] << std::endl;
-        // nic_ids.push_back()
+        nic_ids_path.push_back(std::string(real_path));
+        nic_ids.push_back("bnxt_re" + std::to_string(i));
     }
 
+    if (nic_ids.size() == 0)
+    {
+        std::cout << "no nic found" << std::endl;
+        return -1;
+    }
+
+    for (int i = 0; i < device_count; i++)
+    {
+        size_t distance = 1000;
+        size_t index = -1;
+        for (size_t j = 0; j < nic_ids_path.size(); j++)
+        {
+            auto max_len = std::max(nic_ids_path[i].size(), bus_ids_path[i].size());
+            for (size_t k = 0; k < max_len; k++)
+            {
+                if (nic_ids_path[j][k] == bus_ids_path[i][k])
+                {
+                    max_len--;
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            if (distance > max_len)
+            {
+                index = j;
+                distance = max_len;
+            }
+        }
+        std::cout << i << ": GPU = " << bus_ids[i] << ", NIC = " << nic_ids[index] << std::endl;
+    }
 
     return 0;
 }
