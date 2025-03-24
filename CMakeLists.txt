@@ -48,8 +48,10 @@ add_compile_definitions(__HIP_PLATFORM_AMD__)
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR} Src)
 
 include_directories(/opt/rocm/include/hip)
+include_directories(/opt/rocm/include/rocm_smi)
+
 link_directories(/opt/rocm/lib)
 
 add_executable(${TEST_NAME} auto_topo.cpp)
 
-target_link_libraries(${TEST_NAME} PUBLIC amdhip64)
+target_link_libraries(${TEST_NAME} PUBLIC amdhip64 rocm_smi64)

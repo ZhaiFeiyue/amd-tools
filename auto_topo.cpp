@@ -48,8 +48,12 @@
 #include <map>
 #include <string>
 #include <vector>
-
-#include <hip/hip_runtime_api.h>
+#include <iostream>
+#include <iomanip>
+#include <hip_runtime_api.h>
+#include <rocm_smi.h>
+#include <iostream>
+#include <sstream>
 
 using namespace std;
 
@@ -70,20 +74,27 @@ int main(int argc, char **argv)
 
     std::vector<std::string> bus_ids;
     std::vector<std::string> bus_ids_path;
-
+    rsmi_status_t status = rsmi_init(0);
+    if (status != RSMI_STATUS_SUCCESS)
+    {
+        std::cout << "init failed" << std::endl;
+        return -1;
+    }
     for (int i = 0; i < device_count; i++)
     {
-        char id[100] = {0};
-        error = hipDeviceGetPCIBusId(id, 100, i);
-        if (error != hipSuccess)
+        uint64_t bdfid = 0;
+        status = rsmi_dev_pci_id_get(static_cast<uint32_t>(i), &bdfid);
+        if (status != RSMI_STATUS_SUCCESS)
         {
             std::cout << "get device " << i << " bus failed " << std::endl;
         }
         else
         {
-            std::cout << "device " << i << ", bus id = " << id << std::endl;
+            std::ostringstream ss;
+            ss << std::hex << setw(4) << std::setfill('0') << ((bdfid >> 32) & 0xffffffff) << ":" << setw(2) << std::setfill('0') << ((bdfid >> 8) & 0xff) << ":" << setw(2) << std::setfill('0') << ((bdfid >> 3) & 0x1f) << "." << setw(1) << std::setfill('0') << (bdfid & 0x7);
+            std::string id = ss.str();
+            bus_ids.push_back(id);
         }
-        bus_ids.push_back(std::string(id));
     }
     std::string device_base_path = "/sys/bus/pci/devices/";
     for (size_t i = 0; i < bus_ids.size(); i++)
