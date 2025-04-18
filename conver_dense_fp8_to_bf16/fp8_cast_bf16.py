@@ -16,6 +16,12 @@ def main(fp8_path, bf16_path):
     with open(model_index_file, "r") as f:
         model_index = json.load(f)
     weight_map = model_index["weight_map"]
+
+    config_path = os.path.join(fp8_path,'config.json')
+    with open(config_path, 'r') as fp:
+        conf = json.load(fp)
+
+    intermediate_size = conf['intermediate_size']
     
     # Cache for loaded safetensor files
     loaded_files = {}
@@ -42,7 +48,7 @@ def main(fp8_path, bf16_path):
                 new_state_dict[weight_name] = weight
                 continue
             elif weight.element_size() == 1:  # FP8 weight
-                if not (len(weight.shape) == 2 and (weight.shape[1] == 2048*9  or (weight.shape[0] == 2048*9))):
+                if not (len(weight.shape) == 2 and intermediate_size in weight.shape):
                         new_state_dict[weight_name] = weight
                         continue
 
