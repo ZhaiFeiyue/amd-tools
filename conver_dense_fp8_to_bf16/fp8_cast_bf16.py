@@ -65,7 +65,6 @@ def main(fp8_path, bf16_path):
                     w1 = w1.reshape([M, N])
                     new_state_dict[weight_name] = w1 
                     print('convert ', weight_name)
-                    del new_state_dict[scale_inv_name]
 
                 except KeyError:
                     print(f"Warning: Missing scale_inv tensor for {weight_name}, skipping conversion")
