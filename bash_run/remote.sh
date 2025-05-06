@@ -14,26 +14,57 @@ TMP_DIR=/tmp
 TARGET_DIR=${TMP_DIR}/bench_dir
 CONF=${ROOT}/config.1
 IMG=sabreshao/sglang_bcm:042304
-DIST_IP=localhost
+DIST=localhost
+CLEAN=0
 
-while getopts "c:" opt; do
-    case "${opt}" in
-       	c)
-       		CONF=${OPTARG}
-       		;;
-       	i)
-       		IMG=${OPTARG}
-       		;;
-	:)
-		echo "missing -${opt}"
-		exit 1
-		;;
-	?)
-		echo "invalid opt"
-		exit 2
-		;;
-    esac
+while getopts "c:i:r" opt; do
+	case "${opt}" in
+		c)
+			CONF=${OPTARG}
+			;;
+		i)
+			IMG=${OPTARG}
+			;;
+		r)
+			CLEAN=1
+			;;
+		:)
+			echo "missing -${opt}"
+			exit 1
+			;;
+		?)
+			echo "invalid opt"
+			exit 2
+			;;
+	esac
 done
+
+if [[ ${CLEAN} == 1 ]];then
+	echo "clean dockers"
+	while read line
+	do
+		host=`echo $line | cut -d " " -f 1`
+		user=`echo $line | cut -d " " -f 2`
+		rank=`echo $line | cut -d " " -f 3`
+
+		echo "setup env for ${host}"
+		ssh ${user}@${host} <<EOF
+		set -ex
+		rm -rf ${TARGET_DIR}
+		mkdir -p ${TARGET_DIR}
+EOF
+		scp -r ${ROOT}/run.sh ${user}@${host}:${TARGET_DIR}
+		scp -r ${ROOT}/launch.sh ${user}@${host}:${TARGET_DIR}
+
+		ssh ${user}@${host} <<EOF
+		set -ex
+		DOCKER_NAME=bench_${rank}
+		${TARGET_DIR}/run.sh -m ${NNODES} -r ${rank} -h ${DIST_IP} -n ${DOCKER_NAME} -d ${IMG}
+EOF
+
+	done <  ${CONF}
+	exit 0
+fi
 
 NNODES=`cat ${CONF} | wc -l`
 
@@ -43,11 +74,11 @@ do
 	user=`echo $line | cut -d " " -f 2`
 	rank=`echo $line | cut -d " " -f 3`
 	if [[ ${rank} == 0 ]];then
-		DIST_IP=${host}
+		DIST=${host}
 	fi
 done < ${CONF}
 
-echo ${DIST_IP}
+echo ${DIST}
 exit
 
 # setup
@@ -68,7 +99,8 @@ EOF
 
 	ssh ${user}@${host} <<EOF
 	set -ex
-	${TARGET_DIR}/run.sh ${NNODES} ${rank} ${DIST_IP}
+	DOCKER_NAME=bench_${rank}
+	${TARGET_DIR}/run.sh -m ${NNODES} -r ${rank} -h ${DIST_IP} -n ${DOCKER_NAME} -d ${IMG}
 EOF
 
 done <  ${CONF}

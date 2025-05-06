@@ -23,10 +23,33 @@ export GLOO_SOCKET_IFNAME=ens50f0
 export NCCL_SOCKET_IFNAME=ens50f0
 export NCCL_ALGO=Tree
 
-TP=8
-DP=8
-EP=8
+GPUS=8
+TP=${GPUS}
+DP=${GPUS}
+EP=${GPUS}
 NNODE=1
 NRANK=0
+DIST=localhost
 
-python3 -m sglang.launch_server  --disable-cuda-graph --model-path /apps/data/models/DSV3/ --tp ${TP} --dist-init-addr 10.235.192.60:30001 --nnodes ${NNODE} --node-rank ${NRANK} --trust-remote-code --ep-size ${EP} --enable-ep-moe --chunked-prefill-size 130172 --moe-dense-tp-size 1 --enable-dp-attention --dp-size ${DP}
+while getopts "c:" opt; do
+       case "${opt}" in
+       n)
+              NNODES=${OPTARG}
+              ;;
+       r)
+              NRANK=${OPTARG}
+              ;;
+       h)
+              DIST=${OPTARG}
+              ;;
+       :)
+              echo "missing -${opt}"
+              exit 1
+              ;;
+       ?)
+              echo "invalid opt"
+              exit 2
+esac
+
+
+python3 -m sglang.launch_server  --disable-cuda-graph --model-path /apps/data/models/DSV3/ --tp ${TP} --dist-init-addr ${DIST} --nnodes ${NNODE} --node-rank ${NRANK} --trust-remote-code --ep-size ${EP} --enable-ep-moe --chunked-prefill-size 130172 --moe-dense-tp-size 1 --enable-dp-attention --dp-size ${DP}
