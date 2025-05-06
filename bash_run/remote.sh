@@ -51,15 +51,12 @@ if [[ ${CLEAN} == 1 ]];then
 		ssh ${user}@${host} <<EOF
 		set -ex
 		rm -rf ${TARGET_DIR}
-		mkdir -p ${TARGET_DIR}
 EOF
-		scp -r ${ROOT}/run.sh ${user}@${host}:${TARGET_DIR}
-		scp -r ${ROOT}/launch.sh ${user}@${host}:${TARGET_DIR}
+		DOCKER_NAME=bench_${rank}
 
 		ssh ${user}@${host} <<EOF
 		set -ex
-		DOCKER_NAME=bench_${rank}
-		${TARGET_DIR}/run.sh -m ${NNODES} -r ${rank} -h ${DIST_IP} -n ${DOCKER_NAME} -d ${IMG}
+		sudo docker rm ${DOCKER_NAME}
 EOF
 
 	done <  ${CONF}
