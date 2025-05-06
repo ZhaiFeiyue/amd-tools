@@ -31,7 +31,7 @@ NNODE=1
 NRANK=0
 DIST=localhost
 
-while getopts "c:" opt; do
+while getopts "n:r:h:" opt; do
        case "${opt}" in
        n)
               NNODES=${OPTARG}
