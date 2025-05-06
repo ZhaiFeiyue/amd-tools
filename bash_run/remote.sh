@@ -84,7 +84,10 @@ do
 	scp -r ${ROOT}/launch.sh ${user}@${host}:${TARGET_DIR}
 
 	DOCKER_NAME=bench_${rank}
-	ssh -fn ${user}@${host} "${TARGET_DIR}/run.sh -m ${NNODES} -r ${rank} -h ${DIST} -n ${DOCKER_NAME} -d ${IMG} > /dev/null 2>&1 &"
+	if [[ ${rank} == 0 ]];then
+		ssh -fn ${user}@${host} "${TARGET_DIR}/run.sh -m ${NNODES} -r ${rank} -h ${DIST} -n ${DOCKER_NAME} -d ${IMG}"
+	else
+		ssh -fn ${user}@${host} "${TARGET_DIR}/run.sh -m ${NNODES} -r ${rank} -h ${DIST} -n ${DOCKER_NAME} -d ${IMG} > /dev/null 2>&1 &"
+	fi
 
 done <  ${CONF}
-
