@@ -30,6 +30,7 @@ EP=${GPUS}
 NNODES=1
 NRANK=0
 DIST=localhost
+DIST_PORT=30001
 
 while getopts "n:r:h:" opt; do
        case "${opt}" in
@@ -40,7 +41,7 @@ while getopts "n:r:h:" opt; do
               NRANK=${OPTARG}
               ;;
        h)
-              DIST=${OPTARG}
+              DIST=${OPTARG}:${DIST_PORT}
               ;;
        :)
               echo "missing -${opt}"
