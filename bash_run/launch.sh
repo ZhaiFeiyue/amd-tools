@@ -27,7 +27,7 @@ GPUS=8
 TP=${GPUS}
 DP=${GPUS}
 EP=${GPUS}
-NNODE=1
+NNODES=1
 NRANK=0
 DIST=localhost
 
@@ -53,4 +53,4 @@ while getopts "n:r:h:" opt; do
 done
 
 
-python3 -m sglang.launch_server  --disable-cuda-graph --model-path /apps/data/models/DSV3/ --tp ${TP} --dist-init-addr ${DIST} --nnodes ${NNODE} --node-rank ${NRANK} --trust-remote-code --ep-size ${EP} --enable-ep-moe --chunked-prefill-size 130172 --moe-dense-tp-size 1 --enable-dp-attention --dp-size ${DP}
+python3 -m sglang.launch_server  --disable-cuda-graph --model-path /apps/data/models/DSV3/ --tp ${TP} --dist-init-addr ${DIST} --nnodes ${NNODES} --node-rank ${NRANK} --trust-remote-code --ep-size ${EP} --enable-ep-moe --chunked-prefill-size 130172 --moe-dense-tp-size 1 --enable-dp-attention --dp-size ${DP}
