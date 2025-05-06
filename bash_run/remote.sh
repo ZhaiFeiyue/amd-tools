@@ -48,11 +48,11 @@ if [[ ${CLEAN} == 1 ]];then
 		rank=`echo $line | cut -d " " -f 3`
 
 		echo "clean env for ${host}"
-		ssh ${user}@${host} "rm -rf ${TARGET_DIR}"
-		ssh ${user}@${host} "mkdir -p ${TARGET_DIR}"
+		ssh ${user}@${host} "rm -rf ${TARGET_DIR}" < /dev/null
+		ssh ${user}@${host} "mkdir -p ${TARGET_DIR}" < /dev/null
 		DOCKER_NAME=bench_${rank}
 
-		ssh ${user}@${host} "sudo docker stop ${DOCKER_NAME}"
+		ssh ${user}@${host} "sudo docker stop ${DOCKER_NAME}" < /dev/null
 	done <  ${CONF}
 	exit 0
 fi
@@ -77,17 +77,17 @@ do
 	rank=`echo $line | cut -d " " -f 3`
 
 	echo "setup env for ${host}"
-	ssh ${user}@${host} "rm -rf ${TARGET_DIR}"
-	ssh ${user}@${host} "mkdir -p ${TARGET_DIR}"
+	ssh ${user}@${host} "rm -rf ${TARGET_DIR}" < /dev/null
+	ssh ${user}@${host} "mkdir -p ${TARGET_DIR}" < /dev/null
 
 	scp -r ${ROOT}/run.sh ${user}@${host}:${TARGET_DIR}
 	scp -r ${ROOT}/launch.sh ${user}@${host}:${TARGET_DIR}
 
 	DOCKER_NAME=bench_${rank}
 	if [[ ${rank} == 0 ]];then
-		ssh -fn ${user}@${host} "${TARGET_DIR}/run.sh -m ${NNODES} -r ${rank} -h ${DIST} -n ${DOCKER_NAME} -d ${IMG}"
+		ssh -fn ${user}@${host} "${TARGET_DIR}/run.sh -m ${NNODES} -r ${rank} -h ${DIST} -n ${DOCKER_NAME} -d ${IMG}" < /dev/null
 	else
-		ssh -fn ${user}@${host} "${TARGET_DIR}/run.sh -m ${NNODES} -r ${rank} -h ${DIST} -n ${DOCKER_NAME} -d ${IMG} > /dev/null 2>&1 &"
+		ssh -fn ${user}@${host} "${TARGET_DIR}/run.sh -m ${NNODES} -r ${rank} -h ${DIST} -n ${DOCKER_NAME} -d ${IMG} > /dev/null 2>&1 &" < /dev/null
 	fi
 
 done <  ${CONF}
