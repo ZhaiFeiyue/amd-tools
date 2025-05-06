@@ -9,7 +9,7 @@ DOCKER_IMAGE=sabreshao/sglang_bcm:042304
 NAME=bench_0
 NNODES=1
 NRANK=0
-
+DIST=localhost
 while getopts "d:n:m:h:r:" opt; do
        case "${opt}" in
        d)

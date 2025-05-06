@@ -78,9 +78,6 @@ do
 	fi
 done < ${CONF}
 
-echo ${DIST}
-exit
-
 # setup
 while read line
 do
@@ -97,10 +94,11 @@ EOF
 	scp -r ${ROOT}/run.sh ${user}@${host}:${TARGET_DIR}
 	scp -r ${ROOT}/launch.sh ${user}@${host}:${TARGET_DIR}
 
-	ssh ${user}@${host} <<EOF
-	set -ex
 	DOCKER_NAME=bench_${rank}
-	${TARGET_DIR}/run.sh -m ${NNODES} -r ${rank} -h ${DIST_IP} -n ${DOCKER_NAME} -d ${IMG}
+
+	ssh ${user}@${host} <<EOF
+	set -ex	
+	${TARGET_DIR}/run.sh -m ${NNODES} -r ${rank} -h ${DIST} -n ${DOCKER_NAME} -d ${IMG}
 EOF
 
 done <  ${CONF}
