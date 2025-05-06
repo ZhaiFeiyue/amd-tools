@@ -34,6 +34,7 @@ while getopts "d:n:m:h:r:" opt; do
        ?)
               echo "invalid opt"
               exit 2
-esac
+       esac
+done
 
 sudo docker run --name ${NAME} --rm --network=host --group-add=video  --ipc=host --cap-add=SYS_PTRACE --security-opt seccomp=unconfined --device /dev/kfd  --device /dev/dri -v /apps:/apps -v ${BIN}:/bench --privileged --shm-size=128G --ulimit memlock=-1 --ulimit stack=67108864 ${DOCKER_IMAGE} /bench/launch.sh -n ${NNODES} -r ${NRANK} -h ${DIST}
