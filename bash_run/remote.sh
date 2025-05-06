@@ -56,7 +56,7 @@ EOF
 
 		ssh ${user}@${host} <<EOF
 		set -ex
-		sudo docker rm ${DOCKER_NAME}
+		sudo docker stop ${DOCKER_NAME}
 EOF
 
 	done <  ${CONF}
