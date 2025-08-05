@@ -3,9 +3,9 @@ import sys
 import datetime
 import time
 
-import signal
 import tg4perfetto
 import uuid
+from tg4perfetto import TraceGenerator
 
 
 BASE = "/sys/class/infiniband"
@@ -37,39 +37,48 @@ def main():
     cache = {}
     
     running  = True
-    interval = 1
-    with tg4perfetto.open(file):
-        while running:
-            try:
-                for k in nics:
-                    tx, rx = get_tx_rx(k)
-                    if k not in results:
-                        results[k] = (tg4perfetto.count(f'{k}_tx'), tg4perfetto.count(f'{k}_rx'))
-                        cache[k] = [tx, rx]
-                        continue
-
+    interval = 0.5
+    tgen = TraceGenerator(file)
+    nic_to_count = {}
+    for k in nics:
+        pid = tgen.create_group(k)
+        rx = pid.create_counter_track('rx')
+        tx = pid.create_counter_track('tx')
         
-                    if tx != cache[k][0]:
-                        rate = get_bw_MB(tx, cache[k][0], interval)
-                        mb = int(rate / (1024 * 1024))
-                        results[k][0].count(mb)
-                        cache[k][0] = tx
-                    else:
-                        results[k][0].count(0)
-    
-                    if rx != cache[k][1]:
-                        rate = get_bw_MB(rx, cache[k][1], interval)
-                        mb = int(rate / (1024 * 1024))
-                        results[k][0].count(mb)
-                        cache[k][1] = rx
-                    else:
-                        results[k][1].count(0)
 
-                print(datetime.datetime.now())
-                time.sleep(interval)
-            except KeyboardInterrupt:
-                print('stop ------------------')
-                running = False
+        nic_to_count[k] =(pid, rx, tx) 
+
+    while running:
+        try:
+            for k in nics:
+                tx, rx = get_tx_rx(k)
+                if k not in results:
+                    t = int(time.time())
+                    cache[k] = [tx, rx, t]
+                    nic_to_count[k][1].count(t, 0)
+                    nic_to_count[k][2].count(t, 0)
+                    continue
+    
+                t = int(time.time())
+                duration = t - cache[k][2]
+                cache[k][2] = t
+                if tx != cache[k][0]:
+                    rate = get_bw_MB(tx, cache[k][0], duration)
+                    mb = int(rate / (1024 * 1024))
+                    nic_to_count[k][2].count(t, mb)
+                    cache[k][0] = tx
+    
+                if rx != cache[k][1]:
+                    rate = get_bw_MB(rx, cache[k][1], duration)
+                    mb = int(rate / (1024 * 1024))
+                    nic_to_count[k][1].count(t, mb)
+                    cache[k][1] = rx
+
+            print(datetime.datetime.now())
+            time.sleep(interval)
+        except KeyboardInterrupt:
+            print('stop ------------------')
+            running = False
 
 if __name__ == "__main__":
     main()
