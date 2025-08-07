@@ -33,7 +33,6 @@ def main():
     except:
         file = str(uuid.uuid4())
     nics = get_all_rdma_mic()
-    results = {} 
     cache = {}
     
     running  = True
@@ -52,25 +51,27 @@ def main():
         try:
             for k in nics:
                 tx, rx = get_tx_rx(k)
-                if k not in results:
-                    t = int(time.time())
+                if k not in cache:
+                    t = int(time.time() * 1000)
                     cache[k] = [tx, rx, t]
                     nic_to_count[k][1].count(t, 0)
                     nic_to_count[k][2].count(t, 0)
                     continue
     
-                t = int(time.time())
+                t = int(time.time() * 1000)
                 duration = t - cache[k][2]
                 cache[k][2] = t
                 if tx != cache[k][0]:
                     rate = get_bw_MB(tx, cache[k][0], duration)
-                    mb = int(rate / (1024 * 1024))
+                    mb = int(rate / (1024 * 1024) * 1000)
+                    print(mb)
                     nic_to_count[k][2].count(t, mb)
                     cache[k][0] = tx
     
                 if rx != cache[k][1]:
                     rate = get_bw_MB(rx, cache[k][1], duration)
-                    mb = int(rate / (1024 * 1024))
+                    mb = int(rate / (1024 * 1024) * 1000)
+                    print(mb)
                     nic_to_count[k][1].count(t, mb)
                     cache[k][1] = rx
 
