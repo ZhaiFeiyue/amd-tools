@@ -27,9 +27,7 @@ def get_tx_rx(nic):
 
 
 def get_bw_MB(e,s, interval):
-    return (e - s)/interval
-def _us(t):
-    return int(t*1e6)
+    return int((e - s)/(interval*1.0/1e9))
 
 def main():
     try:
@@ -56,22 +54,22 @@ def main():
             for k in nics:
                 tx, rx = get_tx_rx(k)
                 if k not in cache:
-                    t = time.time()
+                    t = time.time_ns()
                     cache[k] = [tx, rx, t]
-                    nic_to_count[k][1].count(_us(t), 0)
-                    nic_to_count[k][2].count(_us(t), 0)
+                    nic_to_count[k][1].count(t, 0)
+                    nic_to_count[k][2].count(t, 0)
                     continue
     
-                t = time.time()
+                t = time.time_ns()
                 duration = t - cache[k][2]
                 cache[k][2] = t
                 rate = get_bw_MB(tx, cache[k][0], duration)
-                mb = int(rate)
-                nic_to_count[k][2].count(_us(t), mb)
+                mb = rate
+                nic_to_count[k][2].count(t, mb)
     
                 rate = get_bw_MB(rx, cache[k][1], duration)
-                mb = int(rate)
-                nic_to_count[k][1].count(_us(t), mb)
+                mb = rate
+                nic_to_count[k][1].count(t, mb)
 
                 cache[k][0] = tx
                 cache[k][1] = rx
