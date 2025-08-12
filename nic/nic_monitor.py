@@ -9,6 +9,8 @@ from tg4perfetto import TraceGenerator
 
 
 BASE = "/sys/class/infiniband"
+MB=1024 * 1024
+KB = 1024
 
 def get_all_rdma_mic():
     nics = os.listdir(BASE)
@@ -26,6 +28,8 @@ def get_tx_rx(nic):
 
 def get_bw_MB(e,s, interval):
     return (e - s)/interval
+def _us(t):
+    return int(t*1e6)
 
 def main():
     try:
@@ -36,7 +40,7 @@ def main():
     cache = {}
     
     running  = True
-    interval = 0.5
+    interval = 1
     tgen = TraceGenerator(file)
     nic_to_count = {}
     for k in nics:
@@ -52,28 +56,26 @@ def main():
             for k in nics:
                 tx, rx = get_tx_rx(k)
                 if k not in cache:
-                    t = int(time.time() * 1000)
+                    t = time.time()
                     cache[k] = [tx, rx, t]
-                    nic_to_count[k][1].count(t, 0)
-                    nic_to_count[k][2].count(t, 0)
+                    nic_to_count[k][1].count(_us(t), 0)
+                    nic_to_count[k][2].count(_us(t), 0)
                     continue
     
-                t = int(time.time() * 1000)
+                t = time.time()
                 duration = t - cache[k][2]
                 cache[k][2] = t
-                if tx != cache[k][0]:
-                    rate = get_bw_MB(tx, cache[k][0], duration)
-                    mb = int(rate / (1024 * 1024) * 1000)
-                    print(mb)
-                    nic_to_count[k][2].count(t, mb)
-                    cache[k][0] = tx
+                rate = get_bw_MB(tx, cache[k][0], duration)
+                mb = int(rate)
+                nic_to_count[k][2].count(_us(t), mb)
     
-                if rx != cache[k][1]:
-                    rate = get_bw_MB(rx, cache[k][1], duration)
-                    mb = int(rate / (1024 * 1024) * 1000)
-                    print(mb)
-                    nic_to_count[k][1].count(t, mb)
-                    cache[k][1] = rx
+                rate = get_bw_MB(rx, cache[k][1], duration)
+                mb = int(rate)
+                nic_to_count[k][1].count(_us(t), mb)
+
+                cache[k][0] = tx
+                cache[k][1] = rx
+                print(cache[k])
 
             print(datetime.datetime.now())
             time.sleep(interval)
