@@ -1,0 +1,3 @@
+[submodule "rdma_monitor/external/cpp20template"]
+	path = rdma_monitor/external/cpp20template
+	url = https://github.com/zovonoir/cpp20template.git

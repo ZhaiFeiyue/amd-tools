@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 3.20)
+project(rdma_monitor)
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+include_directories(external/cpp20template)
+add_executable(rdma_monitor monitor_rx.cpp)

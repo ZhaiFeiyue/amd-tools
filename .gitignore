@@ -1,0 +1,4 @@
+rdma_monitor/.cache/
+rdma_monitor/build/
+rdma_monitor/data.txt
+rdma_monitor/processd.txt
