@@ -16,6 +16,7 @@
 #include <numeric>
 #include <future>
 #include <algorithm>
+#include <cstring>
 
 #include "utils.h"
 
@@ -27,12 +28,16 @@ namespace fs = std::filesystem;
 #define MAX_SAMPLE (2000000)
 #define SAMPLE_INTERVAL (1000) // ns
 
+enum class ProfileMode {
+    RX,
+    TX
+};
+
 struct RawProfilePoint{
     uint64_t timestamp;
     uint64_t bytes;
     double bw; //gbs
 };
-
 
 void signal_handler(int signal) {
     if (signal == SIGINT) {
@@ -41,7 +46,7 @@ void signal_handler(int signal) {
     }
 }
 
-std::string delete_repeated_data(std::string file_name,std::string nic_name){
+std::string delete_repeated_data(std::string file_name,std::string nic_name,ProfileMode mode){
     // 实测硬件计数器文件的更新有延迟,因此当采样间隔太小,会读取到重复的计数器数据,需要删除
     // 对于已经写入的数据文件,删除其中重复的rx列的数据
     std::ifstream ifs(file_name);
@@ -92,7 +97,7 @@ std::string delete_repeated_data(std::string file_name,std::string nic_name){
                                 | std::views::transform([start_timestamp](RawProfilePoint point){point.timestamp -= start_timestamp;return point;});
 
     // 处理后的数据写入文件方便使用python制作成perfetto文件或者可视化
-    std::string processed_profile_file_name = std::string("data_")+nic_name+std::string("_rx_processed.txt");
+    std::string processed_profile_file_name = std::string("data_")+nic_name+std::string((mode==ProfileMode::RX)?"_rx":"_tx")+std::string("_processed.txt");
     std::fstream ofs2(processed_profile_file_name, std::ios::out | std::ios::trunc);
     for(auto point:filtered){
         ofs2<<point.timestamp<<","<<point.bw<<"\n";
@@ -102,18 +107,19 @@ std::string delete_repeated_data(std::string file_name,std::string nic_name){
     return processed_profile_file_name;
 }
 
-std::string profile_nic_rx(std::string nic_name){
-    auto path = std::string("/sys/class/infiniband/") + nic_name + std::string("/ports/1/hw_counters/rx_bytes");
+std::string profile_nic(std::string nic_name, ProfileMode mode) {
+    auto counter_name = (mode == ProfileMode::RX) ? std::string("/ports/1/hw_counters/rx_bytes") : std::string("/ports/1/hw_counters/tx_bytes");
+    auto suffix_name = (mode == ProfileMode::RX) ? std::string("_rx.txt") : std::string("_tx.txt");
+    auto path = std::string("/sys/class/infiniband/") + nic_name + counter_name;
+    if (!std::filesystem::exists(path)) {
+        return "";
+    }
+
     std::vector<uint64_t> bytes;
     std::vector<uint64_t> ts;
     bytes.reserve(MAX_SAMPLE);
     ts.reserve(MAX_SAMPLE);
-    for(int i=0;i<MAX_SAMPLE;i++){
-        bytes.push_back(0);
-        ts.push_back(0);
-    }
-    
-    
+
     char read_buffer[32] = {0};
     int current_time;
     int counts = 0;
@@ -136,39 +142,57 @@ std::string profile_nic_rx(std::string nic_name){
         counts++;
         std::this_thread::sleep_for(10us);
     }
-    std::string file_name = std::string("data_")+nic_name+std::string("_rx.txt");
+    std::string file_name = std::string("data_")+nic_name+suffix_name;
     std::fstream ofs(file_name, std::ios::out | std::ios::trunc);
     if(ofs){
-        for(int i=0;i<MAX_SAMPLE;i++){
+        for(int i=0;i<counts;i++){
             ofs<<ts[i]<<","<<bytes[i]<<"\n";
         }
     }
     ofs.close();
 
-    auto processed_profile_file_name = delete_repeated_data(file_name,nic_name);
+    auto processed_profile_file_name = delete_repeated_data(file_name,nic_name,mode);
 
     // (TODO.)打印一下更多summary信息
     // utils::println("收集数据已经存储在:",processed_peofile_file_name,"可以使用python做可视化");
     return processed_profile_file_name;
 }
 
-int main() {
+int main(int argc, char ** argv) {
+
+    ProfileMode mode = ProfileMode::RX; // Default to RX only
+
+    // Parse command-line arguments
+    for (int i = 1; i < argc; ++i) {
+        if (std::strcmp(argv[i], "--tx") == 0) {
+            mode = ProfileMode::TX;
+        } else if (std::strcmp(argv[i], "--rx") == 0) {
+            mode = ProfileMode::RX;
+        } else {
+            std::cerr << "Usage: " << argv[0] << " [--rx | --tx]" << std::endl;
+            return 1;
+        }
+    }
+
     signal(SIGINT,signal_handler);
     std::vector<std::thread> threads;
     auto nics = utils::map([](fs::directory_entry entry){return entry.path().filename().string();}, 
                         std::vector<fs::directory_entry>{fs::directory_iterator("/sys/class/infiniband/"),
                                 fs::directory_iterator{}});
+    utils::println("Profile Mode:", std::string((mode==ProfileMode::RX)?"RX":"TX"));
     utils::println("NICS:",nics);
 
     std::vector<std::future<std::string>> futures;
     for (auto& nic_name : nics) {
-        futures.push_back(std::async(std::launch::async, profile_nic_rx, nic_name));
+        futures.push_back(std::async(std::launch::async, profile_nic, nic_name, mode));
     }
 
     std::vector<std::string> profile_results;
     for (auto& fut : futures) {
         auto result = fut.get();
-        profile_results.push_back(result);
+        if (result != "") {
+            profile_results.push_back(result);
+        }
     }
     std::sort(profile_results.begin(), profile_results.end());
     utils::println(profile_results);
