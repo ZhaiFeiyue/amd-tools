@@ -38,7 +38,7 @@ def run_profile(rank, world_size):
             for _ in range(10):
                 gemm_result = torch.matmul(mat1, mat2)
                 dist.all_reduce(gemm_result, op=dist.ReduceOp.SUM)
-                torch.cuda.sychronize()
+                torch.cuda.synchronize()
                 prof.step()
     
 
