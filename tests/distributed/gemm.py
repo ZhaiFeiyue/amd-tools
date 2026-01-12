@@ -2,6 +2,7 @@ import torch
 import torch.distributed as dist
 import os
 import argparse
+import torch.multiprocessing as mp
 
 def run_profile(rank, world_size):
     # 初始化DDP
