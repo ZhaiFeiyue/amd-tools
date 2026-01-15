@@ -1,0 +1,1 @@
+hipcc cpx_bug_minimal.cpp -o cpx_bug_minimal
