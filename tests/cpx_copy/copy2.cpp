@@ -23,13 +23,13 @@ __global__ void copyKernel(const float* src, float* dst, long long n, const int 
 }
 
 int main() {
-    const int device0_id = 31;
+    const int device0_id = 30;
     const int device1_id = 31;
     printf("device0_id: %d, device1_id: %d\n", device0_id, device1_id);
 
-    const int threadsPerBlock = 64;
-    const int blocksPerGrid = 160;
-    const int data_per_thread = 8 * 100;
+    const int threadsPerBlock = 256;
+    const int blocksPerGrid = 65536;
+    const int data_per_thread = 4;
     const long long N = threadsPerBlock * blocksPerGrid * data_per_thread;
     const long long bytes = N * sizeof(float);
     printf("N: %lld, bytes: %lld\n", N, bytes);
@@ -57,11 +57,21 @@ int main() {
     std::cout << "Launching kernel on device0 with " << blocksPerGrid << " blocks and " 
               << threadsPerBlock << " threads per block" << std::endl;
 
-    hipLaunchKernelGGL(copyKernel, dim3(blocksPerGrid), dim3(threadsPerBlock), 
-                       0, 0, d_src, d_dst, N, data_per_thread);
-    // std::cout << "Sleeping ..." << std::endl;
-    // sleep(10000);
-    // Check for kernel launch errors
+    hipEvent_t start_total, stop_total;
+    hipEventCreate(&start_total);
+    hipEventCreate(&stop_total);
+    hipEventRecord(start_total, 0);
+    for (size_t i = 0; i< 1000; i++){
+        hipLaunchKernelGGL(copyKernel, dim3(blocksPerGrid), dim3(threadsPerBlock), 
+                    0, 0, d_src, d_dst, N, data_per_thread);
+    }
+    hipEventRecord(stop_kernel, 0);
+
+    hipEventSynchronize(stop_total);
+    float total_time_ms = 0.0f;
+    hipEventElapsedTime(&total_time_ms, start_total, stop_total);
+    total_time_ms = total_time_ms / 1000;
+    printf("核函数执行耗时: %.3f ms (%.3f μs)\n", total_time_ms, total_time_ms * 1000);
     HIP_CHECK(hipGetLastError());
     
     // Wait for kernel to finish
@@ -72,26 +82,18 @@ int main() {
     
     // Verify results
     bool success = true;
-    // for (long long i = 0; i < N; i++) {
-    //     if (h_dst[i] != h_src[i]) {
-    //         std::cerr << "Verification failed at index " << i << std::endl;
-    //         success = false;
-    //         break;
-    //     }
-    // }
     
     if (success) {
         std::cout << "Copy kernel executed successfully!" << std::endl;
         std::cout << "Verified " << N << " elements" << std::endl;
     }
-    // std::cout << "Sleeping ..." << std::endl;
-    // sleep(10);
-    // Free device memory
+
     HIP_CHECK(hipFree(d_src));
     if (device0_id != device1_id) {
         HIP_CHECK(hipFree(d_dst));
     }
-
+    hipEventDestroy(start_total);
+    hipEventDestroy(stop_total);
     return 0;
 }
  
