@@ -23,8 +23,8 @@ __global__ void copyKernel(const float* src, float* dst, long long n, const int 
 }
 
 int main() {
-    const int device0_id = 30;
-    const int device1_id = 31;
+    const int device0_id = 0;
+    const int device1_id = 4;
     printf("device0_id: %d, device1_id: %d\n", device0_id, device1_id);
 
     const int threadsPerBlock = 256;
@@ -65,17 +65,19 @@ int main() {
         hipLaunchKernelGGL(copyKernel, dim3(blocksPerGrid), dim3(threadsPerBlock), 
                     0, 0, d_src, d_dst, N, data_per_thread);
     }
-    hipEventRecord(stop_kernel, 0);
+    HIP_CHECK(hipDeviceSynchronize());
+    hipEventRecord(stop_total, 0);
 
     hipEventSynchronize(stop_total);
     float total_time_ms = 0.0f;
     hipEventElapsedTime(&total_time_ms, start_total, stop_total);
     total_time_ms = total_time_ms / 1000;
+    float bw = bytes / (total_time_ms/1000) /1e12;
+    std::cout << bw << " T" << std::endl;
     printf("核函数执行耗时: %.3f ms (%.3f μs)\n", total_time_ms, total_time_ms * 1000);
     HIP_CHECK(hipGetLastError());
     
     // Wait for kernel to finish
-    HIP_CHECK(hipDeviceSynchronize());
     
     // Copy result back to host
     HIP_CHECK(hipMemcpy(h_dst.data(), d_dst, bytes, hipMemcpyDeviceToHost));
