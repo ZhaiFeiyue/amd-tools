@@ -3,136 +3,167 @@ import time
 import torch
 import torch.distributed as dist
 import torch.multiprocessing as mp
-from torch.nn.parallel import DistributedDataParallel as DDP
 
 def setup_ddp(rank, world_size):
-    """初始化DDP分布式环境 (适配spawn方式)"""
+    """初始化DDP分布式环境 (适配AMD GPU + spawn)"""
+    # 基础配置
     os.environ['MASTER_ADDR'] = 'localhost'
-    os.environ['MASTER_PORT'] = '29500'  # 固定端口，避免冲突
+    os.environ['MASTER_PORT'] = '29500'  # 使用未被占用的端口
+    os.environ['NCCL_DEBUG'] = 'WARN'     # 减少日志干扰
+    os.environ['TORCH_USE_RCCL'] = '1'    # 强制使用RCCL（AMD GPU）
     
-    # 初始化进程组
-    dist.init_process_group(
-        backend='nccl',
-        init_method='env://',
-        rank=rank,
-        world_size=world_size
-    )
-    
-    # 设置当前GPU
+    # 修复：先设置GPU设备，再初始化进程组
     torch.cuda.set_device(rank)
-    return rank
+    
+    try:
+        # 初始化进程组（AMD用rccl，NVIDIA用nccl）
+        backend = 'nccl' if torch.cuda.get_device_name().lower().find('nvidia') != -1 else 'rccl'
+        dist.init_process_group(
+            backend=backend,
+            init_method='env://',
+            rank=rank,
+            world_size=world_size,
+            timeout=torch.distributed.Timedelta(seconds=30)  # 增加超时时间
+        )
+        return rank
+    except Exception as e:
+        print(f"进程 {rank} 初始化失败: {e}")
+        raise
 
 def cleanup_ddp():
-    """清理分布式环境"""
-    dist.destroy_process_group()
+    """安全清理分布式环境"""
+    if dist.is_initialized():
+        dist.destroy_process_group()
 
 def calculate_gemm_tops(
-    matrix_size: int = 4096, 
-    warmup_steps: int = 10, 
-    test_steps: int = 50
+    matrix_size: int = 2048, 
+    warmup_steps: int = 5, 
+    test_steps: int = 20
 ) -> float:
     """
-    计算GEMM操作的TOPS
+    计算GEMM操作的TOPS（适配AMD GPU，降低默认参数避免OOM）
     
     Args:
-        matrix_size: 方阵的维度大小 (A: M×K, B: K×N, 这里M=K=N=matrix_size)
-        warmup_steps: 预热迭代次数
-        test_steps: 测试迭代次数
+        matrix_size: 方阵维度（AMD GPU建议从2048开始）
+        warmup_steps: 预热步数
+        test_steps: 测试步数
     
     Returns:
         单卡TOPS值
     """
-    # 获取当前设备
     device = torch.cuda.current_device()
     
-    # 创建随机矩阵 (float32)
-    A = torch.randn(matrix_size, matrix_size, device=device, dtype=torch.float32)
-    B = torch.randn(matrix_size, matrix_size, device=device, dtype=torch.float32)
+    # 修复：使用pin_memory和更小的初始矩阵，避免显存爆炸
+    A = torch.randn(matrix_size, matrix_size, device=device, dtype=torch.float32, pin_memory=True)
+    B = torch.randn(matrix_size, matrix_size, device=device, dtype=torch.float32, pin_memory=True)
     
-    # 预热：让GPU达到稳定状态
-    for _ in range(warmup_steps):
-        C = torch.matmul(A, B)
-        torch.cuda.synchronize()  # 等待GPU计算完成
-    
-    # 测试阶段：记录时间
+    # 预热（增加同步，确保GPU稳定）
     torch.cuda.synchronize()
-    start_time = time.time()
-    
-    for _ in range(test_steps):
-        C = torch.matmul(A, B)
+    for _ in range(warmup_steps):
+        with torch.no_grad():  # 禁用梯度计算，节省显存
+            C = torch.matmul(A, B)
         torch.cuda.synchronize()
     
-    end_time = time.time()
+    # 测试阶段
+    torch.cuda.synchronize()
+    start_time = time.perf_counter()  # 更高精度的计时器
     
-    # 计算总耗时
+    with torch.no_grad():
+        for _ in range(test_steps):
+            C = torch.matmul(A, B)
+            torch.cuda.synchronize()
+    
+    end_time = time.perf_counter()
+    
+    # 计算TOPS
     total_time = end_time - start_time
     avg_time_per_step = total_time / test_steps
-    
-    # GEMM运算量计算：2*M*K*N (M=K=N=matrix_size)
     flops_per_gemm = 2 * (matrix_size ** 3)
-    
-    # 转换为TOPS (1 TOPS = 10^12 次运算/秒)
     tops = (flops_per_gemm / avg_time_per_step) / (10 ** 12)
+    
+    # 清理显存
+    del A, B, C
+    torch.cuda.empty_cache()
     
     return tops
 
 def worker(rank, world_size, matrix_size, warmup_steps, test_steps):
-    """每个进程的工作函数 (由spawn启动)"""
+    """每个进程的工作函数（增加异常捕获）"""
     try:
         # 初始化DDP
         setup_ddp(rank, world_size)
         
-        # 计算单卡TOPS
+        # 计算TOPS
         single_gpu_tops = calculate_gemm_tops(matrix_size, warmup_steps, test_steps)
         
-        # 收集所有进程的结果
-        all_tops = [torch.tensor(0.0, device=rank) for _ in range(world_size)]
-        dist.all_gather(all_tops, torch.tensor(single_gpu_tops, device=rank))
+        # 收集结果（修复：使用CPU tensor避免GPU通信问题）
+        single_tops_cpu = torch.tensor(single_gpu_tops, device='cpu')
+        all_tops = [torch.tensor(0.0) for _ in range(world_size)]
+        dist.all_gather(all_tops, single_tops_cpu)
         
-        # 主进程输出结果
+        # 主进程输出
         if rank == 0:
             print("=" * 60)
-            print(f"分布式GEMM性能测试结果 (Spawn + DDP, {world_size} GPUs)")
+            print(f"分布式GEMM性能测试 (AMD GPU + Spawn + DDP)")
+            print(f"GPU数量: {world_size} | 矩阵尺寸: {matrix_size}×{matrix_size}")
             print("=" * 60)
-            print(f"矩阵尺寸: {matrix_size} × {matrix_size}")
-            print(f"预热步数: {warmup_steps}, 测试步数: {test_steps}")
-            print("-" * 60)
             for i, tops in enumerate(all_tops):
                 print(f"GPU {i} TOPS: {tops.item():.2f}")
             print("-" * 60)
             avg_tops = sum([t.item() for t in all_tops]) / world_size
             total_tops = sum([t.item() for t in all_tops])
             print(f"平均单卡TOPS: {avg_tops:.2f}")
-            print(f"总TOPS (所有GPU合计): {total_tops:.2f}")
+            print(f"总TOPS: {total_tops:.2f}")
             print("=" * 60)
     
+    except Exception as e:
+        print(f"进程 {rank} 执行失败: {str(e)}")
+        raise
     finally:
-        # 清理分布式环境
+        # 安全清理
         cleanup_ddp()
+        torch.cuda.empty_cache()
 
 def main():
-    # 配置参数
-    WORLD_SIZE = torch.cuda.device_count()  # 自动获取可用GPU数量
-    MATRIX_SIZE = 4096  # 根据GPU显存调整（如2048/4096/8192）
-    WARMUP_STEPS = 10
-    TEST_STEPS = 50
-    
-    # 检查GPU数量
-    if WORLD_SIZE < 1:
-        print("错误：未检测到GPU，请确保使用支持CUDA的环境")
+    """主函数（增加前置检查）"""
+    # 基础检查
+    if not torch.cuda.is_available():
+        print("错误：未检测到CUDA设备")
         return
     
-    print(f"检测到 {WORLD_SIZE} 个GPU，开始分布式GEMM测试...")
+    # 配置参数（AMD GPU保守配置）
+    WORLD_SIZE = torch.cuda.device_count()
+    MATRIX_SIZE = 2048  # 可逐步增大：2048 → 4096 → 8192
+    WARMUP_STEPS = 5
+    TEST_STEPS = 20
     
-    # 使用spawn启动多进程
-    mp.spawn(
-        worker,
-        args=(WORLD_SIZE, MATRIX_SIZE, WARMUP_STEPS, TEST_STEPS),
-        nprocs=WORLD_SIZE,
-        join=True
-    )
+    print(f"检测到 {WORLD_SIZE} 个AMD GPU，开始测试...")
+    print(f"矩阵尺寸: {MATRIX_SIZE}×{MATRIX_SIZE} (可根据显存调整)")
+    
+    # 修复：设置多进程上下文
+    try:
+        mp.set_start_method('spawn', force=True)
+    except RuntimeError:
+        pass
+    
+    # 启动进程（增加异常捕获）
+    try:
+        mp.spawn(
+            worker,
+            args=(WORLD_SIZE, MATRIX_SIZE, WARMUP_STEPS, TEST_STEPS),
+            nprocs=WORLD_SIZE,
+            join=True,
+            daemon=False  # 非守护进程，便于调试
+        )
+    except Exception as e:
+        print(f"进程启动失败: {e}")
+        # 强制清理GPU资源
+        for i in range(WORLD_SIZE):
+            torch.cuda.device(i)
+            torch.cuda.empty_cache()
 
 if __name__ == "__main__":
-    # 设置多进程启动方式
-    torch.multiprocessing.set_start_method('spawn', force=True)
+    # 限制线程数，避免资源竞争
+    torch.set_num_threads(1)
+    torch.set_num_interop_threads(1)
     main()
