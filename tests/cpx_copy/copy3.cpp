@@ -115,15 +115,29 @@ void benchmark_memcpy(size_t num_elements, int num_runs = 10, int warmup_runs = 
         h_src[i] = static_cast<T>(i % 1000); // 填充随机范围的测试数据
     }
 
+
+    const int device0_id = 0;
+    const int device1_id = 4;
+
     // 4. 分配设备内存
     T* d_src = nullptr;
-    T* d_dst = nullptr;
-    hipMalloc(&d_src, data_size_bytes);
+    HIP_CHECK(hipSetDevice(device1_id));
     hipMalloc(&d_dst, data_size_bytes);
+    
 
+
+    T* d_dst = nullptr;
+    HIP_CHECK(hipSetDevice(device0_id));
+    hipMalloc(&d_src, data_size_bytes);
     // 5. 拷贝数据到设备（预加载）
     hipMemcpy(d_src, h_src, data_size_bytes, hipMemcpyHostToDevice);
     hipDeviceSynchronize();
+    if (device0_id != device1_id) {
+        HIP_CHECK(hipDeviceEnablePeerAccess(device1_id, 0));
+        int can_access = 0;
+        HIP_CHECK(hipDeviceCanAccessPeer(&can_access, device0_id, device1_id));
+        std::cout << "Can device0 access device1: " << can_access << std::endl;
+    }
 
     // 6. 创建计时事件
     hipEvent_t start_event, stop_event;
