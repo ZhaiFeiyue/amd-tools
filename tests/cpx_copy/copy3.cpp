@@ -187,7 +187,6 @@ void benchmark_memcpy(size_t num_elements, int num_runs = 10, int warmup_runs = 
             }
             if (!success) {
                 fprintf(stderr, "Data validation failed!\n");
-                goto cleanup;
             }
         }
     }
