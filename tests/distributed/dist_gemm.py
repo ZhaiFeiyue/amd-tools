@@ -2,16 +2,25 @@ import os
 import time
 import torch
 import torch.distributed as dist
+import torch.multiprocessing as mp
 from torch.nn.parallel import DistributedDataParallel as DDP
 
-def setup_ddp():
-    """初始化DDP分布式环境"""
-    # 初始化进程组，使用nccl后端（GPU推荐）
-    dist.init_process_group(backend='nccl')
+def setup_ddp(rank, world_size):
+    """初始化DDP分布式环境 (适配spawn方式)"""
+    os.environ['MASTER_ADDR'] = 'localhost'
+    os.environ['MASTER_PORT'] = '29500'  # 固定端口，避免冲突
+    
+    # 初始化进程组
+    dist.init_process_group(
+        backend='nccl',
+        init_method='env://',
+        rank=rank,
+        world_size=world_size
+    )
+    
     # 设置当前GPU
-    local_rank = int(os.environ.get("LOCAL_RANK", 0))
-    torch.cuda.set_device(local_rank)
-    return local_rank
+    torch.cuda.set_device(rank)
+    return rank
 
 def cleanup_ddp():
     """清理分布式环境"""
@@ -60,7 +69,6 @@ def calculate_gemm_tops(
     avg_time_per_step = total_time / test_steps
     
     # GEMM运算量计算：2*M*K*N (M=K=N=matrix_size)
-    # 对于A(M×K) × B(K×N) = C(M×N)，需要2*M*K*N次浮点运算
     flops_per_gemm = 2 * (matrix_size ** 3)
     
     # 转换为TOPS (1 TOPS = 10^12 次运算/秒)
@@ -68,32 +76,26 @@ def calculate_gemm_tops(
     
     return tops
 
-def main():
-    # 初始化DDP
-    local_rank = setup_ddp()
-    rank = dist.get_rank()
-    world_size = dist.get_world_size()
-    
-    # 配置参数
-    MATRIX_SIZE = 8192  # 可根据GPU显存调整，建议从4096开始测试
-    WARMUP_STEPS = 10
-    TEST_STEPS = 50
-    
+def worker(rank, world_size, matrix_size, warmup_steps, test_steps):
+    """每个进程的工作函数 (由spawn启动)"""
     try:
+        # 初始化DDP
+        setup_ddp(rank, world_size)
+        
         # 计算单卡TOPS
-        single_gpu_tops = calculate_gemm_tops(MATRIX_SIZE, WARMUP_STEPS, TEST_STEPS)
+        single_gpu_tops = calculate_gemm_tops(matrix_size, warmup_steps, test_steps)
         
         # 收集所有进程的结果
-        all_tops = [torch.tensor(0.0, device=local_rank) for _ in range(world_size)]
-        dist.all_gather(all_tops, torch.tensor(single_gpu_tops, device=local_rank))
+        all_tops = [torch.tensor(0.0, device=rank) for _ in range(world_size)]
+        dist.all_gather(all_tops, torch.tensor(single_gpu_tops, device=rank))
         
         # 主进程输出结果
         if rank == 0:
             print("=" * 60)
-            print(f"分布式GEMM性能测试结果 (DDP, {world_size} GPUs)")
+            print(f"分布式GEMM性能测试结果 (Spawn + DDP, {world_size} GPUs)")
             print("=" * 60)
-            print(f"矩阵尺寸: {MATRIX_SIZE} × {MATRIX_SIZE}")
-            print(f"预热步数: {WARMUP_STEPS}, 测试步数: {TEST_STEPS}")
+            print(f"矩阵尺寸: {matrix_size} × {matrix_size}")
+            print(f"预热步数: {warmup_steps}, 测试步数: {test_steps}")
             print("-" * 60)
             for i, tops in enumerate(all_tops):
                 print(f"GPU {i} TOPS: {tops.item():.2f}")
@@ -108,7 +110,29 @@ def main():
         # 清理分布式环境
         cleanup_ddp()
 
+def main():
+    # 配置参数
+    WORLD_SIZE = torch.cuda.device_count()  # 自动获取可用GPU数量
+    MATRIX_SIZE = 4096  # 根据GPU显存调整（如2048/4096/8192）
+    WARMUP_STEPS = 10
+    TEST_STEPS = 50
+    
+    # 检查GPU数量
+    if WORLD_SIZE < 1:
+        print("错误：未检测到GPU，请确保使用支持CUDA的环境")
+        return
+    
+    print(f"检测到 {WORLD_SIZE} 个GPU，开始分布式GEMM测试...")
+    
+    # 使用spawn启动多进程
+    mp.spawn(
+        worker,
+        args=(WORLD_SIZE, MATRIX_SIZE, WARMUP_STEPS, TEST_STEPS),
+        nprocs=WORLD_SIZE,
+        join=True
+    )
+
 if __name__ == "__main__":
-    # 确保在分布式环境下运行
-    # 运行命令示例: torchrun --nproc_per_node=4 gemm_ddp_tops.py
+    # 设置多进程启动方式
+    torch.multiprocessing.set_start_method('spawn', force=True)
     main()
