@@ -50,16 +50,16 @@ def run_profile(rank, world_size):
     dtype = torch.bfloat16  # 使用float32计算，也可以尝试float16/bfloat16
     A = torch.randn(M, K, device=device, dtype=dtype)
     B = torch.randn(K, N, device=device, dtype=dtype)
-    torch.distributed.barrier()
+    #torch.distributed.barrier()
 
     # print(f"\n开始预热运行 {rank}...")
     for _ in range(10):
         C = tgemm.mm(A, B, None, None, None, None)
     torch.cuda.synchronize()  # 等待GPU操作完成
 
-    torch.distributed.barrier()
+    #torch.distributed.barrier()
 
-    num_runs = 100
+    num_runs = 500
     start_time = time.time()
     for _ in range(num_runs):
         C = tgemm.mm(A, B, None, None, None, None)
@@ -77,10 +77,9 @@ def run_profile(rank, world_size):
     tops = (flops_per_gemm / avg_time_per_run) / 1e12
     gflops = (flops_per_gemm / avg_time_per_run) / 1e9
 
-    tops = torch.tensor(tops, device=device)
-    dist.all_reduce(tops)
-    if rank == 0:
-        print(f"TOPS= {tops:.4f} TOPS")
+   # tops = torch.tensor(tops, device=device)
+    #dist.all_reduce(tops)
+    print(f"{rank} TOPS= {tops:.4f} TOPS")
     cleanup_ddp()
 
 if __name__ == "__main__":
