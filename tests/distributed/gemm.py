@@ -40,8 +40,6 @@ def run_profile(rank, world_size):
                 dist.all_reduce(gemm_result, op=dist.ReduceOp.SUM)
                 torch.cuda.synchronize()
                 prof.step()
-    
-
     if rank == 0:
         print(prof.key_averages().table(sort_by="cuda_time_total", row_limit=10))
     
