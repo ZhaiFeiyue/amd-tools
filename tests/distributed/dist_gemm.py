@@ -23,7 +23,6 @@ def setup_ddp(rank, world_size):
             init_method='env://',
             rank=rank,
             world_size=world_size,
-            timeout=torch.distributed.Timedelta(seconds=30)  # 增加超时时间
         )
         return rank
     except Exception as e:
