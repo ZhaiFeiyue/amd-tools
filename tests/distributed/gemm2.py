@@ -59,13 +59,7 @@ def run_profile(rank, world_size):
     ) as prof:
         # 运行前向+反向传播
         for _ in range(10):
-            with record_function("forward_pass"):
-                output = model(input_data)
-            with record_function("loss_calc"):
-                loss = output.sum()
-            with record_function("backward_pass"):
-                loss.backward()
-            # 每次迭代后step，确保数据被捕获
+            output = model(input_data)
             prof.step()
     
     # 可选：打印当前rank的性能摘要（仅主进程打印即可）
