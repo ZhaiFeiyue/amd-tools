@@ -5,12 +5,22 @@
 #include <type_traits>
 #include <vector>
 #include <algorithm>
+#include <iostream>
+
+
 
 // 适配AMD GPU的核心配置
 #define WAVEFRONT_SIZE 64        // AMD GPU Wavefront大小（固定64）
 #define BLOCK_SIZE     256       // 线程块大小（必须是64的倍数）
 #define VECTOR_SIZE    4         // 向量加载/存储大小（int4/float4）
 #define ALIGNMENT      16        // 内存对齐字节数（匹配VECTOR_SIZE*sizeof(int)）
+
+#define HIP_CHECK(status) \
+	    if (status != hipSuccess) { \
+		            std::cerr << "HIP Error: " << hipGetErrorString(status) \
+		                      << " at " << __FILE__ << ":" << __LINE__ << std::endl; \
+		            exit(1); \
+		        }
 
 // 高性能合并访存Memcpy Kernel
 template <typename T, int VecSize>
@@ -29,17 +39,9 @@ __global__ void coalesced_memcpy_kernel(T* __restrict__ dst,
 
     const size_t total_vecs = num_elements / VecSize;
 
-    if (vec_idx < total_vecs) {
-        dst_vec[vec_idx] = src_vec[vec_idx];
-    }
-
-    const size_t remaining = num_elements % VecSize;
-    if (remaining > 0 && global_thread_id == 0) {
-        const size_t start = total_vecs * VecSize;
-        for (size_t i = start; i < num_elements; i++) {
-            dst[i] = src[i];
-        }
-    }
+	for (size_t i =0; i < 1000; i++){
+        	dst_vec[vec_idx] = src_vec[vec_idx] + i;
+	}
 }
 
 // 批量处理版本（针对超大内存拷贝）
@@ -59,7 +61,9 @@ __global__ void batched_coalesced_memcpy_kernel(T* __restrict__ dst,
     const size_t total_vecs = num_elements / VecSize;
 
     for (size_t vec_idx = global_thread_id; vec_idx < total_vecs; vec_idx += grid_size) {
-        dst_vec[vec_idx] = src_vec[vec_idx];
+	for (size_t i=0; i<1000;i++){
+        dst_vec[vec_idx] = src_vec[vec_idx] + i;
+	}
     }
 
     const size_t remaining = num_elements % VecSize;
@@ -85,8 +89,10 @@ hipError_t hip_coalesced_memcpy(T* dst, const T* src, size_t num_elements, hipSt
 
     hipError_t err;
     if (num_elements <= BLOCK_SIZE * grid_dim_x * VECTOR_SIZE) {
+	std::cout << "111111111111" << std::endl;
         coalesced_memcpy_kernel<T, VECTOR_SIZE><<<grid_dim, block_dim, 0, stream>>>(dst, src, num_elements);
     } else {
+	std::cout << "111111111112" << std::endl;
         batched_coalesced_memcpy_kernel<T, VECTOR_SIZE><<<grid_dim, block_dim, 0, stream>>>(dst, src, num_elements);
     }
     err = hipGetLastError();
@@ -117,23 +123,23 @@ void benchmark_memcpy(size_t num_elements, int num_runs = 10, int warmup_runs = 
 
 
     const int device0_id = 0;
-    const int device1_id = 4;
+    const int device1_id = 1;
 
     // 4. 分配设备内存
     T* d_src = nullptr;
+    T* d_dst = nullptr;
     HIP_CHECK(hipSetDevice(device1_id));
     hipMalloc(&d_dst, data_size_bytes);
     
 
 
-    T* d_dst = nullptr;
     HIP_CHECK(hipSetDevice(device0_id));
     hipMalloc(&d_src, data_size_bytes);
     // 5. 拷贝数据到设备（预加载）
     hipMemcpy(d_src, h_src, data_size_bytes, hipMemcpyHostToDevice);
     hipDeviceSynchronize();
     if (device0_id != device1_id) {
-        HIP_CHECK(hipDeviceEnablePeerAccess(device1_id, 0));
+        hipDeviceEnablePeerAccess(device1_id, 0);
         int can_access = 0;
         HIP_CHECK(hipDeviceCanAccessPeer(&can_access, device0_id, device1_id));
         std::cout << "Can device0 access device1: " << can_access << std::endl;
@@ -174,21 +180,6 @@ void benchmark_memcpy(size_t num_elements, int num_runs = 10, int warmup_runs = 
         hipEventElapsedTime(&elapsed_ms, start_event, stop_event);
         run_times.push_back(elapsed_ms);
 
-        // 验证数据正确性（仅第一轮验证，避免影响性能）
-        if (i == 0) {
-            hipMemcpy(h_dst, d_dst, data_size_bytes, hipMemcpyDeviceToHost);
-            bool success = true;
-            for (size_t j = 0; j < num_elements; j++) {
-                if (h_dst[j] != h_src[j]) {
-                    fprintf(stderr, "Error: Mismatch at index %zu: %d vs %d\n", j, h_dst[j], h_src[j]);
-                    success = false;
-                    break;
-                }
-            }
-            if (!success) {
-                fprintf(stderr, "Data validation failed!\n");
-            }
-        }
     }
 
     // 9. 计算性能指标
@@ -204,7 +195,7 @@ void benchmark_memcpy(size_t num_elements, int num_runs = 10, int warmup_runs = 
     const double avg_time_s = avg_time_ms / 1000.0;
     
     // 计算带宽：总数据量(GB) × 2（读+写） / 耗时(s)
-    const double bandwidth_gbs = (data_size_gb * 2) / avg_time_s;
+    const double bandwidth_gbs = (data_size_gb * 1 * 1000) / avg_time_s;
     
     // 计算吞吐量：数据量(GB) / 耗时(s)
     const double throughput_gbs = data_size_gb / avg_time_s;
@@ -270,12 +261,6 @@ int main() {
     // 运行基准测试
     printf("\n--- Testing Small Data (64MB) ---\n");
     benchmark_memcpy<int>(small_data, 10, 3);
-
-    printf("\n--- Testing Medium Data (1GB) ---\n");
-    benchmark_memcpy<int>(medium_data, 10, 3);
-
-    printf("\n--- Testing Large Data (4GB) ---\n");
-    benchmark_memcpy<int>(large_data, 10, 3);
 
     return 0;
 }

@@ -4,7 +4,7 @@
 #include <cstdlib>
 
 // 定义 L3 缓存大小（根据你的 GPU 调整，比如 MI250X 是 32MB/卡）
-#define L3_CACHE_SIZE (32 * 1024 * 1024)
+#define L3_CACHE_SIZE (128 * 1024 * 1024)
 // 数据类型（可换 double/int 等）
 using DataType = float;
 
@@ -38,7 +38,7 @@ int main() {
     // 3. 配置核函数参数
     int block_size = 256;
     int grid_size = (data_size / sizeof(DataType) + block_size - 1) / block_size;
-    int iterations = 10000; // 循环次数（保证测试时间足够长）
+    int iterations = 100000; // 循环次数（保证测试时间足够长）
 
     // 4. 预热（避免首次运行的初始化开销）
     l3_bandwidth_kernel<<<grid_size, block_size>>>(d_data, 1);
