@@ -39,20 +39,20 @@ def run_profile(rank, world_size):
     model = SimpleModel().to(rank)
     model = DDP(model, device_ids=[rank])
     device = torch.device(f"cuda:{rank}")
-    print(f"使用设备: {rank} {torch.cuda.get_device_name(device)}")
-    print(f"PyTorch ROCm版本信息: {rank} {torch.version.hip if hasattr(torch.version, 'hip') else 'Unknown'}")
+    # print(f"使用设备: {rank} {torch.cuda.get_device_name(device)}")
+    # print(f"PyTorch ROCm版本信息: {rank} {torch.version.hip if hasattr(torch.version, 'hip') else 'Unknown'}")
 
     M = 4096
     N = 4096
     K = 4096
-    print(f"\n矩阵尺寸: {rank} A({M}x{K}), B({K}x{N}), C({M}x{N})")
+    # print(f"\n矩阵尺寸: {rank} A({M}x{K}), B({K}x{N}), C({M}x{N})")
     # 生成测试数据
     dtype = torch.bfloat16  # 使用float32计算，也可以尝试float16/bfloat16
     A = torch.randn(M, K, device=device, dtype=dtype)
     B = torch.randn(K, N, device=device, dtype=dtype)
     torch.distributed.barrier()
 
-    print(f"\n开始预热运行 {rank}...")
+    # print(f"\n开始预热运行 {rank}...")
     for _ in range(10):
         C = tgemm.mm(A, B, None, None, None, None)
     torch.cuda.synchronize()  # 等待GPU操作完成
@@ -80,11 +80,11 @@ def run_profile(rank, world_size):
     tops = torch.tensor(tops, device=device)
     dist.all_reduce(tops)
     if rank == 0:
-        print(f"平均计算性能: {tops:.4f} TOPS")
+        print(f"TOPS= {tops:.4f} TOPS")
     cleanup_ddp()
 
 if __name__ == "__main__":
     world_size = torch.cuda.device_count()
-    print(f"Running on {world_size} GPUs")
+    # print(f"Running on {world_size} GPUs")
     # 启动多进程
     mp.spawn(run_profile, args=(world_size,), nprocs=world_size, join=True)
