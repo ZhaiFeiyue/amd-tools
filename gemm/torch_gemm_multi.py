@@ -42,9 +42,12 @@ def run_profile(rank, world_size):
     # print(f"使用设备: {rank} {torch.cuda.get_device_name(device)}")
     # print(f"PyTorch ROCm版本信息: {rank} {torch.version.hip if hasattr(torch.version, 'hip') else 'Unknown'}")
 
-    M = 4096
+    if rank % 2 == 0:
+        M = 4096 
+    else:
+        M = 1
     N = 4096
-    K = 4096
+    K = 4096 
     # print(f"\n矩阵尺寸: {rank} A({M}x{K}), B({K}x{N}), C({M}x{N})")
     # 生成测试数据
     dtype = torch.bfloat16  # 使用float32计算，也可以尝试float16/bfloat16
@@ -54,15 +57,15 @@ def run_profile(rank, world_size):
 
     # print(f"\n开始预热运行 {rank}...")
     for _ in range(10):
-        C = tgemm.mm(A, B, None, None, None, None)
+        C = tgemm.mm(A, B, None, torch.float32,None, None)
     torch.cuda.synchronize()  # 等待GPU操作完成
 
-    #torch.distributed.barrier()
+    torch.distributed.barrier()
 
     num_runs = 500
     start_time = time.time()
     for _ in range(num_runs):
-        C = tgemm.mm(A, B, None, None, None, None)
+        C = tgemm.mm(A, B, None, torch.float32, None, None)
     torch.cuda.synchronize()  # 等待所有GPU操作完成
     end_time = time.time()
 
@@ -72,14 +75,17 @@ def run_profile(rank, world_size):
     # GEMM运算量计算: 2 * M * N * K (每个元素需要K次乘法和K-1次加法，约等于2*K)
     flops_per_gemm = 2 * M * N * K
     total_flops = flops_per_gemm * num_runs
+    total_params = M * K*2 + K * N*2 + M * N *4
     
     # 转换为TOPS (1 TOPS = 1e12 次运算/秒)
     tops = (flops_per_gemm / avg_time_per_run) / 1e12
-    gflops = (flops_per_gemm / avg_time_per_run) / 1e9
+    bw = (total_params / avg_time_per_run) / 1e12
 
    # tops = torch.tensor(tops, device=device)
     #dist.all_reduce(tops)
-    print(f"{rank} TOPS= {tops:.4f} TOPS")
+    print(f"{rank} TOPS= {tops:.4f} TOPS, {bw} T")
+
+    torch.distributed.barrier()
     cleanup_ddp()
 
 if __name__ == "__main__":
