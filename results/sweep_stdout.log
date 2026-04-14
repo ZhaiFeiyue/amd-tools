@@ -1,0 +1,949 @@
+==========================================
+FP4 GEMM Tuning Sweep - Mon Apr 13 01:49:47 UTC 2026
+GPU: AMD Instinct MI355X
+==========================================
+
+=== Phase 1: M=128 Primary Shapes ===
+[1/2] M=128, N=4096, K=7168...
+[aiter] import [module_aiter_core] under /sgl-workspace/aiter/aiter/jit/module_aiter_core.so
+GPU: AMD Instinct MI355X
+Shape: M=128, N=4096, K=7168
+Default config (tuned=True): {'BLOCK_SIZE_M': 64, 'BLOCK_SIZE_N': 64, 'BLOCK_SIZE_K': 512, 'GROUP_SIZE_M': 1, 'num_warps': 4, 'num_stages': 3, 'waves_per_eu': 1, 'matrix_instr_nonkdim': 16, 'cache_modifier': None, 'NUM_KSPLIT': 1}
+Baseline: 0.0142 ms, 529.45 TFLOPS
+
+=== Stage 1: Coarse tile sweep ===
+  Configs: 324
+  S1:Progress: 100/324 (8s, ~17s ETA)
+  S1:Progress: 200/324 (14s, ~9s ETA)
+  S1:Progress: 300/324 (26s, ~2s ETA)
+  S1:Done: 288 valid / 324 total in 29.8s
+
+=== Stage 2: Warps/stages/waves/cache sweep (top 6 tiles) ===
+  Configs: 480
+  S2:[49/480] NEW BEST: 0.0131 ms, 571.74 TFLOPS -- BM=64 BN=64 BK=512 GM=1 KS=1 W=4 S=3 WPE=1 MFMA=32 CM=None
+  S2:[55/480] NEW BEST: 0.0131 ms, 573.19 TFLOPS -- BM=64 BN=64 BK=512 GM=1 KS=1 W=4 S=3 WPE=4 MFMA=32 CM=None
+  S2:Progress: 100/480 (24s, ~92s ETA)
+  S2:Progress: 200/480 (47s, ~66s ETA)
+  S2:Progress: 300/480 (73s, ~44s ETA)
+  S2:Progress: 400/480 (101s, ~20s ETA)
+  S2:Done: 456 valid / 480 total in 121.4s
+
+=== Stage 3: GROUP_SIZE_M / NUM_KSPLIT sweep (top 5 configs) ===
+  Configs: 75
+  S3:[1/75] NEW BEST: 0.0131 ms, 573.80 TFLOPS -- BM=64 BN=64 BK=512 GM=1 KS=1 W=4 S=3 WPE=4 MFMA=32 CM=None
+  S3:Done: 75 valid / 75 total in 15.0s
+
+==========================================================================================
+TUNING COMPLETE
+==========================================================================================
+Shape: M=128, N=4096, K=7168
+Baseline: 0.0142 ms, 529.45 TFLOPS
+BEST:     0.0131 ms, 573.80 TFLOPS (1.084x)
+
+Top 20:
+Rank   Time(ms)     TFLOPS  vs Base Config
+------------------------------------------------------------------------------------------------------------------------
+   1     0.0131     573.80   1.084x BM=64 BN=64 BK=512 GM=1 KS=1 W=4 S=3 WPE=4 MFMA=32 CM=None
+   2     0.0131     572.42   1.081x BM=64 BN=64 BK=512 GM=1 KS=1 W=4 S=3 WPE=2 MFMA=32 CM=None
+   3     0.0131     571.74   1.080x BM=64 BN=64 BK=512 GM=1 KS=1 W=4 S=3 WPE=1 MFMA=32 CM=None
+   4     0.0132     569.02   1.075x BM=64 BN=64 BK=512 GM=2 KS=1 W=4 S=3 WPE=2 MFMA=32 CM=None
+   5     0.0132     567.85   1.073x BM=64 BN=64 BK=512 GM=2 KS=1 W=4 S=3 WPE=1 MFMA=32 CM=None
+   6     0.0133     565.19   1.068x BM=64 BN=64 BK=512 GM=1 KS=1 W=4 S=3 WPE=3 MFMA=32 CM=None
+   7     0.0135     556.55   1.051x BM=64 BN=64 BK=512 GM=1 KS=1 W=4 S=4 WPE=4 MFMA=32 CM=None
+   8     0.0137     548.97   1.037x BM=64 BN=64 BK=512 GM=1 KS=1 W=4 S=4 WPE=3 MFMA=32 CM=None
+   9     0.0140     538.28   1.017x BM=64 BN=64 BK=512 GM=1 KS=1 W=4 S=4 WPE=3 MFMA=16 CM=None
+  10     0.0141     531.87   1.005x BM=64 BN=64 BK=512 GM=1 KS=1 W=4 S=3 WPE=1 MFMA=16 CM=None
+  11     0.0142     528.17   0.998x BM=64 BN=64 BK=512 GM=1 KS=1 W=4 S=3 WPE=4 MFMA=16 CM=None
+  12     0.0154     487.03   0.920x BM=64 BN=64 BK=512 GM=2 KS=1 W=4 S=3 WPE=2 MFMA=16 CM=.cg
+  13     0.0154     487.01   0.920x BM=64 BN=64 BK=512 GM=2 KS=1 W=4 S=3 WPE=4 MFMA=16 CM=.cg
+  14     0.0154     486.58   0.919x BM=64 BN=64 BK=512 GM=2 KS=1 W=4 S=4 WPE=1 MFMA=16 CM=.cg
+  15     0.0155     485.95   0.918x BM=64 BN=64 BK=512 GM=2 KS=1 W=4 S=3 WPE=3 MFMA=16 CM=.cg
+  16     0.0157     477.88   0.903x BM=64 BN=64 BK=512 GM=1 KS=1 W=4 S=3 WPE=4 MFMA=32 CM=.cg
+  17     0.0159     474.03   0.895x BM=64 BN=64 BK=512 GM=1 KS=1 W=4 S=2 WPE=2 MFMA=32 CM=None
+  18     0.0160     470.69   0.889x BM=64 BN=64 BK=512 GM=1 KS=1 W=4 S=2 WPE=1 MFMA=32 CM=None
+  19     0.0160     470.22   0.888x BM=64 BN=64 BK=512 GM=1 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+  20     0.0160     469.55   0.887x BM=64 BN=64 BK=512 GM=1 KS=1 W=4 S=2 WPE=1 MFMA=16 CM=None
+
+Saved to: /apps/feiyue/rocm-optimization-skill/results/best_M128_N4096_K7168.json
+[2/2] M=128, N=7168, K=2048...
+[aiter] import [module_aiter_core] under /sgl-workspace/aiter/aiter/jit/module_aiter_core.so
+GPU: AMD Instinct MI355X
+Shape: M=128, N=7168, K=2048
+Default config (tuned=False): {'BLOCK_SIZE_M': 64, 'BLOCK_SIZE_N': 64, 'BLOCK_SIZE_K': 512, 'GROUP_SIZE_M': 1, 'num_warps': 4, 'num_stages': 3, 'waves_per_eu': 1, 'matrix_instr_nonkdim': 16, 'cache_modifier': None, 'NUM_KSPLIT': 1}
+Baseline: 0.0152 ms, 247.86 TFLOPS
+
+=== Stage 1: Coarse tile sweep ===
+  Configs: 324
+  S1:[7/324] NEW BEST: 0.0140 ms, 268.23 TFLOPS -- BM=64 BN=64 BK=128 GM=2 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:[20/324] NEW BEST: 0.0131 ms, 286.24 TFLOPS -- BM=64 BN=64 BK=256 GM=1 KS=1 W=4 S=2 WPE=2 MFMA=32 CM=None
+  S1:Progress: 100/324 (8s, ~19s ETA)
+  S1:Progress: 200/324 (15s, ~9s ETA)
+  S1:Progress: 300/324 (22s, ~2s ETA)
+  S1:Done: 288 valid / 324 total in 22.9s
+
+=== Stage 2: Warps/stages/waves/cache sweep (top 6 tiles) ===
+  Configs: 576
+  S2:Progress: 100/576 (20s, ~94s ETA)
+  S2:Progress: 200/576 (45s, ~85s ETA)
+  S2:Progress: 300/576 (75s, ~69s ETA)
+  S2:Progress: 400/576 (101s, ~44s ETA)
+  S2:Progress: 500/576 (121s, ~18s ETA)
+  S2:Done: 504 valid / 576 total in 126.6s
+
+=== Stage 3: GROUP_SIZE_M / NUM_KSPLIT sweep (top 5 configs) ===
+  Configs: 75
+  S3:Done: 75 valid / 75 total in 14.5s
+
+==========================================================================================
+TUNING COMPLETE
+==========================================================================================
+Shape: M=128, N=7168, K=2048
+Baseline: 0.0152 ms, 247.86 TFLOPS
+BEST:     0.0131 ms, 286.24 TFLOPS (1.155x)
+
+Top 20:
+Rank   Time(ms)     TFLOPS  vs Base Config
+------------------------------------------------------------------------------------------------------------------------
+   1     0.0131     286.24   1.155x BM=64 BN=64 BK=256 GM=1 KS=1 W=4 S=2 WPE=2 MFMA=32 CM=None
+   2     0.0132     285.41   1.151x BM=128 BN=64 BK=512 GM=1 KS=1 W=4 S=2 WPE=2 MFMA=32 CM=None
+   3     0.0133     282.11   1.138x BM=128 BN=64 BK=512 GM=4 KS=1 W=4 S=2 WPE=2 MFMA=32 CM=None
+   4     0.0133     281.99   1.138x BM=64 BN=128 BK=512 GM=1 KS=1 W=4 S=2 WPE=2 MFMA=32 CM=None
+   5     0.0134     280.90   1.133x BM=64 BN=64 BK=256 GM=4 KS=1 W=4 S=2 WPE=2 MFMA=32 CM=None
+   6     0.0135     279.08   1.126x BM=64 BN=64 BK=512 GM=4 KS=1 W=4 S=2 WPE=2 MFMA=32 CM=None
+   7     0.0135     278.74   1.125x BM=128 BN=64 BK=512 GM=1 KS=1 W=4 S=3 WPE=2 MFMA=32 CM=.cg
+   8     0.0135     278.34   1.123x BM=64 BN=64 BK=512 GM=2 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+   9     0.0135     278.01   1.122x BM=128 BN=128 BK=512 GM=1 KS=1 W=4 S=2 WPE=2 MFMA=32 CM=None
+  10     0.0135     277.78   1.121x BM=64 BN=128 BK=512 GM=2 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+  11     0.0135     277.44   1.119x BM=64 BN=64 BK=256 GM=2 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+  12     0.0136     276.59   1.116x BM=128 BN=64 BK=512 GM=1 KS=1 W=4 S=3 WPE=2 MFMA=32 CM=None
+  13     0.0136     276.41   1.115x BM=64 BN=128 BK=512 GM=4 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+  14     0.0136     276.12   1.114x BM=64 BN=64 BK=512 GM=1 KS=1 W=4 S=1 WPE=1 MFMA=16 CM=.cg
+  15     0.0136     275.68   1.112x BM=64 BN=64 BK=512 GM=1 KS=1 W=4 S=2 WPE=2 MFMA=32 CM=None
+  16     0.0136     275.65   1.112x BM=64 BN=64 BK=256 GM=4 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+  17     0.0136     275.41   1.111x BM=128 BN=64 BK=512 GM=1 KS=1 W=4 S=2 WPE=1 MFMA=32 CM=None
+  18     0.0136     275.40   1.111x BM=128 BN=128 BK=512 GM=2 KS=1 W=4 S=2 WPE=2 MFMA=32 CM=None
+  19     0.0137     275.01   1.110x BM=128 BN=64 BK=256 GM=4 KS=1 W=4 S=2 WPE=2 MFMA=32 CM=None
+  20     0.0137     274.72   1.108x BM=128 BN=64 BK=512 GM=1 KS=1 W=8 S=2 WPE=3 MFMA=32 CM=.cg
+
+Saved to: /apps/feiyue/rocm-optimization-skill/results/best_M128_N7168_K2048.json
+
+=== Phase 2: Small-M Sweep ===
+
+--- M=1, N=4096, K=7168 ---
+[aiter] import [module_aiter_core] under /sgl-workspace/aiter/aiter/jit/module_aiter_core.so
+GPU: AMD Instinct MI355X
+Shape: M=1, N=4096, K=7168
+Default config (tuned=True): {'BLOCK_SIZE_M': 8, 'BLOCK_SIZE_N': 64, 'BLOCK_SIZE_K': 512, 'GROUP_SIZE_M': 1, 'num_warps': 4, 'num_stages': 2, 'waves_per_eu': 2, 'matrix_instr_nonkdim': 16, 'cache_modifier': '.cg', 'NUM_KSPLIT': 8}
+Baseline: 0.0392 ms, 1.50 TFLOPS
+
+=== Stage 1: Coarse tile sweep ===
+  Configs: 135
+  S1:[1/135] NEW BEST: 0.0388 ms, 1.51 TFLOPS -- BM=16 BN=64 BK=128 GM=1 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:[2/135] NEW BEST: 0.0315 ms, 1.87 TFLOPS -- BM=16 BN=64 BK=128 GM=1 KS=2 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:[6/135] NEW BEST: 0.0303 ms, 1.94 TFLOPS -- BM=16 BN=64 BK=128 GM=2 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:[11/135] NEW BEST: 0.0288 ms, 2.04 TFLOPS -- BM=16 BN=64 BK=128 GM=4 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:[16/135] NEW BEST: 0.0210 ms, 2.79 TFLOPS -- BM=16 BN=64 BK=256 GM=1 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:[31/135] NEW BEST: 0.0153 ms, 3.84 TFLOPS -- BM=16 BN=64 BK=512 GM=1 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:Progress: 100/135 (14s, ~5s ETA)
+  S1:Done: 135 valid / 135 total in 20.0s
+
+=== Stage 2: Warps/stages/waves/cache sweep (top 6 tiles) ===
+  Configs: 576
+  S2:Progress: 100/576 (19s, ~92s ETA)
+  S2:Progress: 200/576 (39s, ~73s ETA)
+  S2:Progress: 300/576 (60s, ~55s ETA)
+  S2:Progress: 400/576 (82s, ~36s ETA)
+  S2:Progress: 500/576 (107s, ~16s ETA)
+  S2:Done: 576 valid / 576 total in 123.3s
+
+=== Stage 3: GROUP_SIZE_M / NUM_KSPLIT sweep (top 5 configs) ===
+  Configs: 140
+  S3:Progress: 100/140 (17s, ~7s ETA)
+  S3:Done: 140 valid / 140 total in 22.8s
+
+==========================================================================================
+TUNING COMPLETE
+==========================================================================================
+Shape: M=1, N=4096, K=7168
+Baseline: 0.0392 ms, 1.50 TFLOPS
+BEST:     0.0153 ms, 3.84 TFLOPS (2.565x)
+
+Top 10:
+Rank   Time(ms)     TFLOPS  vs Base Config
+------------------------------------------------------------------------------------------------------------------------
+   1     0.0153       3.84   2.565x BM=16 BN=64 BK=512 GM=1 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+   2     0.0154       3.81   2.544x BM=16 BN=64 BK=512 GM=4 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+   3     0.0156       3.78   2.521x BM=16 BN=64 BK=512 GM=2 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+   4     0.0156       3.76   2.509x BM=16 BN=128 BK=512 GM=2 KS=1 W=8 S=4 WPE=3 MFMA=16 CM=.cg
+   5     0.0156       3.76   2.508x BM=16 BN=128 BK=512 GM=2 KS=1 W=8 S=4 WPE=2 MFMA=16 CM=.cg
+   6     0.0156       3.75   2.506x BM=16 BN=128 BK=512 GM=2 KS=1 W=8 S=3 WPE=3 MFMA=16 CM=.cg
+   7     0.0157       3.75   2.504x BM=16 BN=128 BK=512 GM=2 KS=1 W=8 S=3 WPE=4 MFMA=16 CM=.cg
+   8     0.0157       3.75   2.502x BM=16 BN=128 BK=512 GM=2 KS=1 W=8 S=3 WPE=2 MFMA=16 CM=.cg
+   9     0.0157       3.74   2.501x BM=16 BN=128 BK=512 GM=2 KS=1 W=8 S=3 WPE=1 MFMA=16 CM=.cg
+  10     0.0157       3.73   2.494x BM=16 BN=128 BK=512 GM=2 KS=1 W=8 S=4 WPE=4 MFMA=16 CM=.cg
+
+Saved to: /apps/feiyue/rocm-optimization-skill/results/best_M1_N4096_K7168.json
+
+--- M=1, N=7168, K=2048 ---
+[aiter] import [module_aiter_core] under /sgl-workspace/aiter/aiter/jit/module_aiter_core.so
+GPU: AMD Instinct MI355X
+Shape: M=1, N=7168, K=2048
+Default config (tuned=False): {'BLOCK_SIZE_M': 8, 'BLOCK_SIZE_N': 64, 'BLOCK_SIZE_K': 512, 'GROUP_SIZE_M': 1, 'num_warps': 4, 'num_stages': 2, 'waves_per_eu': 2, 'matrix_instr_nonkdim': 32, 'cache_modifier': '.cg', 'NUM_KSPLIT': 4}
+Baseline: 0.0401 ms, 0.73 TFLOPS
+
+=== Stage 1: Coarse tile sweep ===
+  Configs: 135
+  S1:[1/135] NEW BEST: 0.0155 ms, 1.89 TFLOPS -- BM=16 BN=64 BK=128 GM=1 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:[6/135] NEW BEST: 0.0141 ms, 2.08 TFLOPS -- BM=16 BN=64 BK=128 GM=2 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:[16/135] NEW BEST: 0.0139 ms, 2.12 TFLOPS -- BM=16 BN=64 BK=256 GM=1 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:[21/135] NEW BEST: 0.0136 ms, 2.16 TFLOPS -- BM=16 BN=64 BK=256 GM=2 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:[31/135] NEW BEST: 0.0135 ms, 2.17 TFLOPS -- BM=16 BN=64 BK=512 GM=1 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:Progress: 100/135 (13s, ~4s ETA)
+  S1:[106/135] NEW BEST: 0.0111 ms, 2.65 TFLOPS -- BM=16 BN=256 BK=256 GM=1 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:[121/135] NEW BEST: 0.0108 ms, 2.71 TFLOPS -- BM=16 BN=256 BK=512 GM=1 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:[126/135] NEW BEST: 0.0107 ms, 2.74 TFLOPS -- BM=16 BN=256 BK=512 GM=2 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:Done: 135 valid / 135 total in 17.3s
+
+=== Stage 2: Warps/stages/waves/cache sweep (top 6 tiles) ===
+  Configs: 576
+  S2:Progress: 100/576 (28s, ~133s ETA)
+  S2:Progress: 200/576 (54s, ~101s ETA)
+  S2:Progress: 300/576 (78s, ~71s ETA)
+  S2:Progress: 400/576 (105s, ~46s ETA)
+  S2:Progress: 500/576 (132s, ~20s ETA)
+  S2:Done: 432 valid / 576 total in 148.6s
+
+=== Stage 3: GROUP_SIZE_M / NUM_KSPLIT sweep (top 5 configs) ===
+  Configs: 112
+  S3:Progress: 100/112 (13s, ~2s ETA)
+  S3:Done: 112 valid / 112 total in 14.3s
+
+==========================================================================================
+TUNING COMPLETE
+==========================================================================================
+Shape: M=1, N=7168, K=2048
+Baseline: 0.0401 ms, 0.73 TFLOPS
+BEST:     0.0107 ms, 2.74 TFLOPS (3.737x)
+
+Top 10:
+Rank   Time(ms)     TFLOPS  vs Base Config
+------------------------------------------------------------------------------------------------------------------------
+   1     0.0107       2.74   3.737x BM=16 BN=256 BK=512 GM=2 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+   2     0.0108       2.71   3.699x BM=16 BN=256 BK=512 GM=1 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+   3     0.0111       2.65   3.614x BM=16 BN=256 BK=256 GM=1 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+   4     0.0112       2.62   3.571x BM=16 BN=256 BK=256 GM=2 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+   5     0.0117       2.52   3.437x BM=16 BN=256 BK=512 GM=4 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+   6     0.0118       2.49   3.396x BM=16 BN=256 BK=256 GM=4 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+   7     0.0120       2.45   3.344x BM=16 BN=256 BK=512 GM=2 KS=1 W=8 S=2 WPE=2 MFMA=16 CM=.cg
+   8     0.0120       2.44   3.328x BM=16 BN=256 BK=512 GM=1 KS=1 W=8 S=2 WPE=4 MFMA=16 CM=.cg
+   9     0.0121       2.43   3.314x BM=16 BN=256 BK=512 GM=1 KS=1 W=8 S=2 WPE=3 MFMA=16 CM=.cg
+  10     0.0122       2.42   3.298x BM=16 BN=256 BK=512 GM=1 KS=1 W=8 S=2 WPE=2 MFMA=16 CM=.cg
+
+Saved to: /apps/feiyue/rocm-optimization-skill/results/best_M1_N7168_K2048.json
+
+--- M=2, N=4096, K=7168 ---
+[aiter] import [module_aiter_core] under /sgl-workspace/aiter/aiter/jit/module_aiter_core.so
+GPU: AMD Instinct MI355X
+Shape: M=2, N=4096, K=7168
+Default config (tuned=True): {'BLOCK_SIZE_M': 8, 'BLOCK_SIZE_N': 64, 'BLOCK_SIZE_K': 512, 'GROUP_SIZE_M': 1, 'num_warps': 4, 'num_stages': 2, 'waves_per_eu': 2, 'matrix_instr_nonkdim': 16, 'cache_modifier': '.cg', 'NUM_KSPLIT': 8}
+Baseline: 0.0394 ms, 2.98 TFLOPS
+
+=== Stage 1: Coarse tile sweep ===
+  Configs: 135
+  S1:[1/135] NEW BEST: 0.0391 ms, 3.00 TFLOPS -- BM=16 BN=64 BK=128 GM=1 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:[2/135] NEW BEST: 0.0367 ms, 3.20 TFLOPS -- BM=16 BN=64 BK=128 GM=1 KS=2 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:[3/135] NEW BEST: 0.0366 ms, 3.20 TFLOPS -- BM=16 BN=64 BK=128 GM=1 KS=4 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:[4/135] NEW BEST: 0.0364 ms, 3.23 TFLOPS -- BM=16 BN=64 BK=128 GM=1 KS=8 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:[5/135] NEW BEST: 0.0357 ms, 3.29 TFLOPS -- BM=16 BN=64 BK=128 GM=1 KS=16 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:[6/135] NEW BEST: 0.0293 ms, 4.01 TFLOPS -- BM=16 BN=64 BK=128 GM=2 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:[11/135] NEW BEST: 0.0276 ms, 4.25 TFLOPS -- BM=16 BN=64 BK=128 GM=4 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:[16/135] NEW BEST: 0.0205 ms, 5.73 TFLOPS -- BM=16 BN=64 BK=256 GM=1 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:[21/135] NEW BEST: 0.0204 ms, 5.76 TFLOPS -- BM=16 BN=64 BK=256 GM=2 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:[26/135] NEW BEST: 0.0203 ms, 5.77 TFLOPS -- BM=16 BN=64 BK=256 GM=4 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:[31/135] NEW BEST: 0.0146 ms, 8.06 TFLOPS -- BM=16 BN=64 BK=512 GM=1 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:Progress: 100/135 (14s, ~5s ETA)
+  S1:Done: 135 valid / 135 total in 20.6s
+
+=== Stage 2: Warps/stages/waves/cache sweep (top 6 tiles) ===
+  Configs: 576
+  S2:Progress: 100/576 (20s, ~97s ETA)
+  S2:Progress: 200/576 (41s, ~76s ETA)
+  S2:Progress: 300/576 (63s, ~58s ETA)
+  S2:Progress: 400/576 (86s, ~38s ETA)
+  S2:Progress: 500/576 (110s, ~17s ETA)
+  S2:Done: 576 valid / 576 total in 126.5s
+
+=== Stage 3: GROUP_SIZE_M / NUM_KSPLIT sweep (top 5 configs) ===
+  Configs: 84
+  S3:Done: 84 valid / 84 total in 14.2s
+
+==========================================================================================
+TUNING COMPLETE
+==========================================================================================
+Shape: M=2, N=4096, K=7168
+Baseline: 0.0394 ms, 2.98 TFLOPS
+BEST:     0.0146 ms, 8.06 TFLOPS (2.704x)
+
+Top 10:
+Rank   Time(ms)     TFLOPS  vs Base Config
+------------------------------------------------------------------------------------------------------------------------
+   1     0.0146       8.06   2.704x BM=16 BN=64 BK=512 GM=1 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+   2     0.0151       7.78   2.611x BM=16 BN=64 BK=512 GM=2 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+   3     0.0151       7.75   2.602x BM=16 BN=64 BK=512 GM=4 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+   4     0.0158       7.43   2.493x BM=16 BN=128 BK=512 GM=1 KS=1 W=8 S=4 WPE=2 MFMA=16 CM=.cg
+   5     0.0158       7.42   2.490x BM=16 BN=128 BK=512 GM=1 KS=1 W=8 S=4 WPE=4 MFMA=16 CM=.cg
+   6     0.0158       7.41   2.487x BM=16 BN=128 BK=512 GM=2 KS=1 W=8 S=4 WPE=4 MFMA=16 CM=.cg
+   7     0.0159       7.41   2.485x BM=16 BN=128 BK=512 GM=1 KS=1 W=8 S=4 WPE=3 MFMA=16 CM=.cg
+   8     0.0159       7.40   2.483x BM=16 BN=128 BK=512 GM=2 KS=1 W=8 S=4 WPE=3 MFMA=16 CM=.cg
+   9     0.0159       7.38   2.477x BM=16 BN=128 BK=512 GM=2 KS=1 W=8 S=4 WPE=2 MFMA=16 CM=.cg
+  10     0.0160       7.34   2.462x BM=16 BN=128 BK=512 GM=8 KS=1 W=8 S=4 WPE=2 MFMA=16 CM=.cg
+
+Saved to: /apps/feiyue/rocm-optimization-skill/results/best_M2_N4096_K7168.json
+
+--- M=2, N=7168, K=2048 ---
+[aiter] import [module_aiter_core] under /sgl-workspace/aiter/aiter/jit/module_aiter_core.so
+GPU: AMD Instinct MI355X
+Shape: M=2, N=7168, K=2048
+Default config (tuned=False): {'BLOCK_SIZE_M': 8, 'BLOCK_SIZE_N': 64, 'BLOCK_SIZE_K': 512, 'GROUP_SIZE_M': 1, 'num_warps': 4, 'num_stages': 2, 'waves_per_eu': 2, 'matrix_instr_nonkdim': 32, 'cache_modifier': '.cg', 'NUM_KSPLIT': 4}
+Baseline: 0.0386 ms, 1.52 TFLOPS
+
+=== Stage 1: Coarse tile sweep ===
+  Configs: 135
+  S1:[1/135] NEW BEST: 0.0154 ms, 3.81 TFLOPS -- BM=16 BN=64 BK=128 GM=1 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:[6/135] NEW BEST: 0.0141 ms, 4.17 TFLOPS -- BM=16 BN=64 BK=128 GM=2 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:[16/135] NEW BEST: 0.0131 ms, 4.47 TFLOPS -- BM=16 BN=64 BK=256 GM=1 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:Progress: 100/135 (13s, ~4s ETA)
+  S1:Done: 135 valid / 135 total in 17.6s
+
+=== Stage 2: Warps/stages/waves/cache sweep (top 6 tiles) ===
+  Configs: 576
+  S2:Progress: 100/576 (17s, ~83s ETA)
+  S2:Progress: 200/576 (35s, ~65s ETA)
+  S2:Progress: 300/576 (55s, ~51s ETA)
+  S2:[330/576] NEW BEST: 0.0131 ms, 4.48 TFLOPS -- BM=16 BN=64 BK=512 GM=1 KS=1 W=4 S=2 WPE=1 MFMA=16 CM=.cg
+  S2:Progress: 400/576 (77s, ~34s ETA)
+  S2:Progress: 500/576 (100s, ~15s ETA)
+  S2:Done: 576 valid / 576 total in 117.3s
+
+=== Stage 3: GROUP_SIZE_M / NUM_KSPLIT sweep (top 5 configs) ===
+  Configs: 140
+  S3:Progress: 100/140 (12s, ~5s ETA)
+  S3:Done: 140 valid / 140 total in 17.2s
+
+==========================================================================================
+TUNING COMPLETE
+==========================================================================================
+Shape: M=2, N=7168, K=2048
+Baseline: 0.0386 ms, 1.52 TFLOPS
+BEST:     0.0131 ms, 4.48 TFLOPS (2.940x)
+
+Top 10:
+Rank   Time(ms)     TFLOPS  vs Base Config
+------------------------------------------------------------------------------------------------------------------------
+   1     0.0131       4.48   2.940x BM=16 BN=64 BK=512 GM=1 KS=1 W=4 S=2 WPE=1 MFMA=16 CM=.cg
+   2     0.0131       4.47   2.935x BM=16 BN=64 BK=256 GM=1 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+   3     0.0132       4.43   2.913x BM=16 BN=64 BK=256 GM=2 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+   4     0.0133       4.41   2.895x BM=16 BN=64 BK=512 GM=1 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=.cg
+   5     0.0134       4.39   2.881x BM=16 BN=64 BK=512 GM=2 KS=1 W=8 S=4 WPE=3 MFMA=16 CM=None
+   6     0.0134       4.38   2.877x BM=16 BN=64 BK=512 GM=1 KS=1 W=4 S=1 WPE=2 MFMA=16 CM=.cg
+   7     0.0134       4.38   2.877x BM=16 BN=64 BK=512 GM=2 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+   8     0.0134       4.37   2.873x BM=16 BN=64 BK=512 GM=2 KS=1 W=2 S=2 WPE=4 MFMA=16 CM=.cg
+   9     0.0134       4.37   2.871x BM=16 BN=64 BK=256 GM=2 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=.cg
+  10     0.0134       4.37   2.871x BM=16 BN=64 BK=256 GM=2 KS=1 W=4 S=2 WPE=4 MFMA=16 CM=None
+
+Saved to: /apps/feiyue/rocm-optimization-skill/results/best_M2_N7168_K2048.json
+
+--- M=4, N=4096, K=7168 ---
+[aiter] import [module_aiter_core] under /sgl-workspace/aiter/aiter/jit/module_aiter_core.so
+GPU: AMD Instinct MI355X
+Shape: M=4, N=4096, K=7168
+Default config (tuned=True): {'BLOCK_SIZE_M': 8, 'BLOCK_SIZE_N': 64, 'BLOCK_SIZE_K': 512, 'GROUP_SIZE_M': 1, 'num_warps': 4, 'num_stages': 2, 'waves_per_eu': 2, 'matrix_instr_nonkdim': 16, 'cache_modifier': '.cg', 'NUM_KSPLIT': 8}
+Baseline: 0.0392 ms, 5.99 TFLOPS
+
+=== Stage 1: Coarse tile sweep ===
+  Configs: 135
+  S1:[1/135] NEW BEST: 0.0392 ms, 6.00 TFLOPS -- BM=16 BN=64 BK=128 GM=1 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:[2/135] NEW BEST: 0.0367 ms, 6.40 TFLOPS -- BM=16 BN=64 BK=128 GM=1 KS=2 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:[6/135] NEW BEST: 0.0295 ms, 7.95 TFLOPS -- BM=16 BN=64 BK=128 GM=2 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:[11/135] NEW BEST: 0.0278 ms, 8.45 TFLOPS -- BM=16 BN=64 BK=128 GM=4 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:[16/135] NEW BEST: 0.0211 ms, 11.14 TFLOPS -- BM=16 BN=64 BK=256 GM=1 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:[26/135] NEW BEST: 0.0209 ms, 11.26 TFLOPS -- BM=16 BN=64 BK=256 GM=4 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:[31/135] NEW BEST: 0.0149 ms, 15.76 TFLOPS -- BM=16 BN=64 BK=512 GM=1 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:Progress: 100/135 (8s, ~3s ETA)
+  S1:Done: 135 valid / 135 total in 10.7s
+
+=== Stage 2: Warps/stages/waves/cache sweep (top 6 tiles) ===
+  Configs: 576
+  S2:Progress: 100/576 (7s, ~35s ETA)
+  S2:Progress: 200/576 (15s, ~28s ETA)
+  S2:Progress: 300/576 (22s, ~21s ETA)
+  S2:Progress: 400/576 (30s, ~13s ETA)
+  S2:Progress: 500/576 (37s, ~6s ETA)
+  S2:Done: 576 valid / 576 total in 42.9s
+
+=== Stage 3: GROUP_SIZE_M / NUM_KSPLIT sweep (top 5 configs) ===
+  Configs: 84
+  S3:Done: 84 valid / 84 total in 7.0s
+
+==========================================================================================
+TUNING COMPLETE
+==========================================================================================
+Shape: M=4, N=4096, K=7168
+Baseline: 0.0392 ms, 5.99 TFLOPS
+BEST:     0.0149 ms, 15.76 TFLOPS (2.631x)
+
+Top 10:
+Rank   Time(ms)     TFLOPS  vs Base Config
+------------------------------------------------------------------------------------------------------------------------
+   1     0.0149      15.76   2.631x BM=16 BN=64 BK=512 GM=1 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+   2     0.0151      15.58   2.601x BM=16 BN=64 BK=512 GM=4 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+   3     0.0153      15.36   2.564x BM=16 BN=64 BK=512 GM=2 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+   4     0.0159      14.77   2.467x BM=16 BN=128 BK=512 GM=2 KS=1 W=8 S=4 WPE=4 MFMA=16 CM=.cg
+   5     0.0159      14.76   2.465x BM=16 BN=128 BK=512 GM=1 KS=1 W=8 S=4 WPE=4 MFMA=16 CM=.cg
+   6     0.0159      14.76   2.464x BM=16 BN=128 BK=512 GM=1 KS=1 W=8 S=4 WPE=3 MFMA=16 CM=.cg
+   7     0.0159      14.74   2.462x BM=16 BN=128 BK=512 GM=2 KS=1 W=8 S=4 WPE=3 MFMA=16 CM=.cg
+   8     0.0160      14.73   2.459x BM=16 BN=128 BK=512 GM=2 KS=1 W=8 S=4 WPE=2 MFMA=16 CM=.cg
+   9     0.0160      14.70   2.455x BM=16 BN=128 BK=512 GM=1 KS=1 W=8 S=4 WPE=2 MFMA=16 CM=.cg
+  10     0.0160      14.70   2.455x BM=16 BN=128 BK=512 GM=4 KS=1 W=8 S=4 WPE=4 MFMA=16 CM=.cg
+
+Saved to: /apps/feiyue/rocm-optimization-skill/results/best_M4_N4096_K7168.json
+
+--- M=4, N=7168, K=2048 ---
+[aiter] import [module_aiter_core] under /sgl-workspace/aiter/aiter/jit/module_aiter_core.so
+GPU: AMD Instinct MI355X
+Shape: M=4, N=7168, K=2048
+Default config (tuned=False): {'BLOCK_SIZE_M': 8, 'BLOCK_SIZE_N': 64, 'BLOCK_SIZE_K': 512, 'GROUP_SIZE_M': 1, 'num_warps': 4, 'num_stages': 2, 'waves_per_eu': 2, 'matrix_instr_nonkdim': 32, 'cache_modifier': '.cg', 'NUM_KSPLIT': 4}
+Baseline: 0.0404 ms, 2.91 TFLOPS
+
+=== Stage 1: Coarse tile sweep ===
+  Configs: 135
+  S1:[1/135] NEW BEST: 0.0153 ms, 7.69 TFLOPS -- BM=16 BN=64 BK=128 GM=1 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:[6/135] NEW BEST: 0.0149 ms, 7.88 TFLOPS -- BM=16 BN=64 BK=128 GM=2 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:[11/135] NEW BEST: 0.0148 ms, 7.96 TFLOPS -- BM=16 BN=64 BK=128 GM=4 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:[16/135] NEW BEST: 0.0143 ms, 8.20 TFLOPS -- BM=16 BN=64 BK=256 GM=1 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:[21/135] NEW BEST: 0.0141 ms, 8.32 TFLOPS -- BM=16 BN=64 BK=256 GM=2 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:[26/135] NEW BEST: 0.0139 ms, 8.45 TFLOPS -- BM=16 BN=64 BK=256 GM=4 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:[81/135] NEW BEST: 0.0138 ms, 8.50 TFLOPS -- BM=16 BN=128 BK=512 GM=2 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:Progress: 100/135 (8s, ~3s ETA)
+  S1:Done: 135 valid / 135 total in 11.1s
+
+=== Stage 2: Warps/stages/waves/cache sweep (top 6 tiles) ===
+  Configs: 576
+  S2:[1/576] NEW BEST: 0.0137 ms, 8.54 TFLOPS -- BM=16 BN=128 BK=512 GM=2 KS=1 W=2 S=1 WPE=1 MFMA=16 CM=None
+  S2:[12/576] NEW BEST: 0.0117 ms, 10.02 TFLOPS -- BM=16 BN=128 BK=512 GM=2 KS=1 W=2 S=2 WPE=2 MFMA=16 CM=.cg
+  S2:[16/576] NEW BEST: 0.0114 ms, 10.30 TFLOPS -- BM=16 BN=128 BK=512 GM=2 KS=1 W=2 S=2 WPE=4 MFMA=16 CM=.cg
+  S2:[18/576] NEW BEST: 0.0112 ms, 10.49 TFLOPS -- BM=16 BN=128 BK=512 GM=2 KS=1 W=2 S=3 WPE=1 MFMA=16 CM=.cg
+  S2:Progress: 100/576 (22s, ~103s ETA)
+  S2:Progress: 200/576 (42s, ~79s ETA)
+  S2:Progress: 300/576 (71s, ~65s ETA)
+  S2:Progress: 400/576 (94s, ~41s ETA)
+  S2:Progress: 500/576 (102s, ~15s ETA)
+  S2:Done: 480 valid / 576 total in 107.5s
+
+=== Stage 3: GROUP_SIZE_M / NUM_KSPLIT sweep (top 5 configs) ===
+  Configs: 140
+  S3:Progress: 100/140 (16s, ~7s ETA)
+  S3:Done: 140 valid / 140 total in 22.2s
+
+==========================================================================================
+TUNING COMPLETE
+==========================================================================================
+Shape: M=4, N=7168, K=2048
+Baseline: 0.0404 ms, 2.91 TFLOPS
+BEST:     0.0112 ms, 10.49 TFLOPS (3.611x)
+
+Top 10:
+Rank   Time(ms)     TFLOPS  vs Base Config
+------------------------------------------------------------------------------------------------------------------------
+   1     0.0112      10.49   3.611x BM=16 BN=128 BK=512 GM=2 KS=1 W=2 S=3 WPE=1 MFMA=16 CM=.cg
+   2     0.0114      10.30   3.543x BM=16 BN=128 BK=512 GM=2 KS=1 W=2 S=2 WPE=4 MFMA=16 CM=.cg
+   3     0.0117      10.02   3.447x BM=16 BN=128 BK=512 GM=2 KS=1 W=2 S=2 WPE=2 MFMA=16 CM=.cg
+   4     0.0119       9.89   3.402x BM=16 BN=128 BK=512 GM=2 KS=1 W=2 S=2 WPE=3 MFMA=16 CM=.cg
+   5     0.0122       9.61   3.308x BM=16 BN=128 BK=512 GM=2 KS=1 W=2 S=2 WPE=4 MFMA=16 CM=None
+   6     0.0122       9.61   3.306x BM=16 BN=128 BK=512 GM=2 KS=1 W=2 S=2 WPE=3 MFMA=16 CM=None
+   7     0.0124       9.47   3.257x BM=16 BN=128 BK=512 GM=2 KS=1 W=2 S=3 WPE=1 MFMA=16 CM=None
+   8     0.0126       9.29   3.196x BM=16 BN=64 BK=512 GM=2 KS=1 W=2 S=4 WPE=2 MFMA=16 CM=.cg
+   9     0.0128       9.20   3.167x BM=16 BN=64 BK=512 GM=2 KS=1 W=2 S=4 WPE=4 MFMA=16 CM=None
+  10     0.0128       9.16   3.153x BM=16 BN=64 BK=512 GM=2 KS=1 W=4 S=1 WPE=1 MFMA=16 CM=None
+
+Saved to: /apps/feiyue/rocm-optimization-skill/results/best_M4_N7168_K2048.json
+
+--- M=8, N=4096, K=7168 ---
+[aiter] import [module_aiter_core] under /sgl-workspace/aiter/aiter/jit/module_aiter_core.so
+GPU: AMD Instinct MI355X
+Shape: M=8, N=4096, K=7168
+Default config (tuned=True): {'BLOCK_SIZE_M': 8, 'BLOCK_SIZE_N': 64, 'BLOCK_SIZE_K': 512, 'GROUP_SIZE_M': 1, 'num_warps': 4, 'num_stages': 2, 'waves_per_eu': 2, 'matrix_instr_nonkdim': 16, 'cache_modifier': '.cg', 'NUM_KSPLIT': 8}
+Baseline: 0.0394 ms, 11.92 TFLOPS
+
+=== Stage 1: Coarse tile sweep ===
+  Configs: 135
+  S1:[1/135] NEW BEST: 0.0389 ms, 12.09 TFLOPS -- BM=16 BN=64 BK=128 GM=1 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:[2/135] NEW BEST: 0.0355 ms, 13.22 TFLOPS -- BM=16 BN=64 BK=128 GM=1 KS=2 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:[3/135] NEW BEST: 0.0354 ms, 13.27 TFLOPS -- BM=16 BN=64 BK=128 GM=1 KS=4 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:[6/135] NEW BEST: 0.0289 ms, 16.23 TFLOPS -- BM=16 BN=64 BK=128 GM=2 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:[11/135] NEW BEST: 0.0289 ms, 16.28 TFLOPS -- BM=16 BN=64 BK=128 GM=4 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:[16/135] NEW BEST: 0.0219 ms, 21.43 TFLOPS -- BM=16 BN=64 BK=256 GM=1 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:[21/135] NEW BEST: 0.0218 ms, 21.58 TFLOPS -- BM=16 BN=64 BK=256 GM=2 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:[26/135] NEW BEST: 0.0216 ms, 21.79 TFLOPS -- BM=16 BN=64 BK=256 GM=4 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:[31/135] NEW BEST: 0.0152 ms, 30.89 TFLOPS -- BM=16 BN=64 BK=512 GM=1 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:Progress: 100/135 (8s, ~3s ETA)
+  S1:Done: 135 valid / 135 total in 10.8s
+
+=== Stage 2: Warps/stages/waves/cache sweep (top 6 tiles) ===
+  Configs: 576
+  S2:Progress: 100/576 (7s, ~35s ETA)
+  S2:Progress: 200/576 (15s, ~28s ETA)
+  S2:Progress: 300/576 (22s, ~21s ETA)
+  S2:Progress: 400/576 (30s, ~13s ETA)
+  S2:Progress: 500/576 (37s, ~6s ETA)
+  S2:Done: 576 valid / 576 total in 43.1s
+
+=== Stage 3: GROUP_SIZE_M / NUM_KSPLIT sweep (top 5 configs) ===
+  Configs: 84
+  S3:Done: 84 valid / 84 total in 7.0s
+
+==========================================================================================
+TUNING COMPLETE
+==========================================================================================
+Shape: M=8, N=4096, K=7168
+Baseline: 0.0394 ms, 11.92 TFLOPS
+BEST:     0.0152 ms, 30.89 TFLOPS (2.592x)
+
+Top 10:
+Rank   Time(ms)     TFLOPS  vs Base Config
+------------------------------------------------------------------------------------------------------------------------
+   1     0.0152      30.89   2.592x BM=16 BN=64 BK=512 GM=1 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+   2     0.0157      30.01   2.518x BM=16 BN=64 BK=512 GM=2 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+   3     0.0157      29.98   2.515x BM=16 BN=64 BK=512 GM=4 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+   4     0.0160      29.31   2.460x BM=16 BN=128 BK=512 GM=2 KS=1 W=8 S=4 WPE=4 MFMA=16 CM=.cg
+   5     0.0161      29.23   2.453x BM=16 BN=128 BK=512 GM=1 KS=1 W=8 S=4 WPE=4 MFMA=16 CM=.cg
+   6     0.0161      29.23   2.453x BM=16 BN=128 BK=512 GM=2 KS=1 W=8 S=4 WPE=2 MFMA=16 CM=.cg
+   7     0.0161      29.23   2.453x BM=16 BN=128 BK=512 GM=2 KS=1 W=8 S=4 WPE=3 MFMA=16 CM=.cg
+   8     0.0161      29.21   2.451x BM=16 BN=128 BK=512 GM=1 KS=1 W=8 S=4 WPE=3 MFMA=16 CM=.cg
+   9     0.0161      29.21   2.451x BM=16 BN=128 BK=512 GM=1 KS=1 W=8 S=4 WPE=2 MFMA=16 CM=.cg
+  10     0.0162      29.07   2.439x BM=16 BN=128 BK=512 GM=4 KS=1 W=8 S=4 WPE=4 MFMA=16 CM=.cg
+
+Saved to: /apps/feiyue/rocm-optimization-skill/results/best_M8_N4096_K7168.json
+
+--- M=8, N=7168, K=2048 ---
+[aiter] import [module_aiter_core] under /sgl-workspace/aiter/aiter/jit/module_aiter_core.so
+GPU: AMD Instinct MI355X
+Shape: M=8, N=7168, K=2048
+Default config (tuned=False): {'BLOCK_SIZE_M': 8, 'BLOCK_SIZE_N': 64, 'BLOCK_SIZE_K': 512, 'GROUP_SIZE_M': 1, 'num_warps': 4, 'num_stages': 2, 'waves_per_eu': 2, 'matrix_instr_nonkdim': 32, 'cache_modifier': '.cg', 'NUM_KSPLIT': 4}
+Baseline: 0.0414 ms, 5.68 TFLOPS
+
+=== Stage 1: Coarse tile sweep ===
+  Configs: 135
+  S1:[1/135] NEW BEST: 0.0158 ms, 14.83 TFLOPS -- BM=16 BN=64 BK=128 GM=1 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:[6/135] NEW BEST: 0.0149 ms, 15.81 TFLOPS -- BM=16 BN=64 BK=128 GM=2 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:[16/135] NEW BEST: 0.0146 ms, 16.05 TFLOPS -- BM=16 BN=64 BK=256 GM=1 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:[21/135] NEW BEST: 0.0115 ms, 20.40 TFLOPS -- BM=16 BN=64 BK=256 GM=2 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:[26/135] NEW BEST: 0.0114 ms, 20.55 TFLOPS -- BM=16 BN=64 BK=256 GM=4 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:[31/135] NEW BEST: 0.0113 ms, 20.81 TFLOPS -- BM=16 BN=64 BK=512 GM=1 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:[36/135] NEW BEST: 0.0112 ms, 21.00 TFLOPS -- BM=16 BN=64 BK=512 GM=2 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:[41/135] NEW BEST: 0.0111 ms, 21.09 TFLOPS -- BM=16 BN=64 BK=512 GM=4 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:[61/135] NEW BEST: 0.0109 ms, 21.48 TFLOPS -- BM=16 BN=128 BK=256 GM=1 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:[81/135] NEW BEST: 0.0106 ms, 22.21 TFLOPS -- BM=16 BN=128 BK=512 GM=2 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:Progress: 100/135 (8s, ~3s ETA)
+  S1:Done: 135 valid / 135 total in 10.8s
+
+=== Stage 2: Warps/stages/waves/cache sweep (top 6 tiles) ===
+  Configs: 576
+  S2:Progress: 100/576 (8s, ~40s ETA)
+  S2:Progress: 200/576 (30s, ~56s ETA)
+  S2:Progress: 300/576 (49s, ~45s ETA)
+  S2:Progress: 400/576 (69s, ~31s ETA)
+  S2:Progress: 500/576 (87s, ~13s ETA)
+  S2:Done: 576 valid / 576 total in 93.3s
+
+=== Stage 3: GROUP_SIZE_M / NUM_KSPLIT sweep (top 5 configs) ===
+  Configs: 140
+  S3:Progress: 100/140 (13s, ~5s ETA)
+  S3:Done: 140 valid / 140 total in 18.0s
+
+==========================================================================================
+TUNING COMPLETE
+==========================================================================================
+Shape: M=8, N=7168, K=2048
+Baseline: 0.0414 ms, 5.68 TFLOPS
+BEST:     0.0106 ms, 22.21 TFLOPS (3.911x)
+
+Top 10:
+Rank   Time(ms)     TFLOPS  vs Base Config
+------------------------------------------------------------------------------------------------------------------------
+   1     0.0106      22.21   3.911x BM=16 BN=128 BK=512 GM=2 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+   2     0.0106      22.14   3.900x BM=16 BN=128 BK=512 GM=4 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+   3     0.0107      21.99   3.873x BM=16 BN=128 BK=512 GM=1 KS=1 W=8 S=4 WPE=3 MFMA=16 CM=None
+   4     0.0108      21.68   3.819x BM=16 BN=128 BK=512 GM=1 KS=1 W=8 S=4 WPE=1 MFMA=16 CM=.cg
+   5     0.0109      21.48   3.784x BM=16 BN=128 BK=256 GM=1 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+   6     0.0109      21.46   3.780x BM=16 BN=128 BK=512 GM=1 KS=1 W=8 S=3 WPE=1 MFMA=16 CM=None
+   7     0.0110      21.44   3.775x BM=16 BN=128 BK=512 GM=1 KS=1 W=8 S=3 WPE=3 MFMA=16 CM=.cg
+   8     0.0110      21.43   3.774x BM=16 BN=128 BK=512 GM=1 KS=1 W=8 S=4 WPE=4 MFMA=16 CM=None
+   9     0.0110      21.37   3.764x BM=16 BN=128 BK=512 GM=1 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+  10     0.0110      21.31   3.753x BM=16 BN=128 BK=512 GM=1 KS=1 W=8 S=4 WPE=2 MFMA=16 CM=None
+
+Saved to: /apps/feiyue/rocm-optimization-skill/results/best_M8_N7168_K2048.json
+
+--- M=16, N=4096, K=7168 ---
+[aiter] import [module_aiter_core] under /sgl-workspace/aiter/aiter/jit/module_aiter_core.so
+GPU: AMD Instinct MI355X
+Shape: M=16, N=4096, K=7168
+Default config (tuned=True): {'BLOCK_SIZE_M': 32, 'BLOCK_SIZE_N': 32, 'BLOCK_SIZE_K': 1024, 'GROUP_SIZE_M': 4, 'num_warps': 4, 'num_stages': 3, 'waves_per_eu': 1, 'matrix_instr_nonkdim': 16, 'cache_modifier': '.cg', 'NUM_KSPLIT': 1}
+Baseline: 0.0145 ms, 64.68 TFLOPS
+
+=== Stage 1: Coarse tile sweep ===
+  Configs: 135
+  S1:Progress: 100/135 (15s, ~5s ETA)
+  S1:Done: 135 valid / 135 total in 21.3s
+
+=== Stage 2: Warps/stages/waves/cache sweep (top 6 tiles) ===
+  Configs: 576
+  S2:Progress: 100/576 (22s, ~103s ETA)
+  S2:Progress: 200/576 (42s, ~79s ETA)
+  S2:Progress: 300/576 (63s, ~58s ETA)
+  S2:Progress: 400/576 (88s, ~39s ETA)
+  S2:Progress: 500/576 (113s, ~17s ETA)
+  S2:Done: 576 valid / 576 total in 131.7s
+
+=== Stage 3: GROUP_SIZE_M / NUM_KSPLIT sweep (top 5 configs) ===
+  Configs: 140
+  S3:Progress: 100/140 (12s, ~5s ETA)
+  S3:Done: 140 valid / 140 total in 16.5s
+
+==========================================================================================
+TUNING COMPLETE
+==========================================================================================
+Shape: M=16, N=4096, K=7168
+Baseline: 0.0145 ms, 64.68 TFLOPS
+No improvement over baseline
+
+Top 10:
+Rank   Time(ms)     TFLOPS  vs Base Config
+------------------------------------------------------------------------------------------------------------------------
+   1     0.0145      64.60   0.999x BM=32 BN=32 BK=1024 GM=1 KS=1 W=8 S=2 WPE=3 MFMA=16 CM=.cg
+   2     0.0146      64.43   0.996x BM=32 BN=32 BK=1024 GM=8 KS=1 W=4 S=3 WPE=1 MFMA=16 CM=.cg
+   3     0.0146      64.39   0.996x BM=32 BN=32 BK=1024 GM=4 KS=1 W=4 S=3 WPE=1 MFMA=16 CM=.cg
+   4     0.0147      64.09   0.991x BM=32 BN=32 BK=1024 GM=4 KS=1 W=8 S=3 WPE=2 MFMA=16 CM=.cg
+   5     0.0147      63.92   0.988x BM=32 BN=32 BK=1024 GM=4 KS=1 W=8 S=3 WPE=3 MFMA=16 CM=.cg
+   6     0.0147      63.79   0.986x BM=32 BN=32 BK=1024 GM=2 KS=1 W=4 S=3 WPE=1 MFMA=16 CM=.cg
+   7     0.0147      63.75   0.986x BM=32 BN=32 BK=1024 GM=1 KS=1 W=2 S=2 WPE=2 MFMA=16 CM=.cg
+   8     0.0148      63.36   0.980x BM=32 BN=32 BK=1024 GM=2 KS=1 W=8 S=2 WPE=3 MFMA=16 CM=.cg
+   9     0.0149      63.02   0.974x BM=32 BN=32 BK=1024 GM=1 KS=1 W=8 S=3 WPE=2 MFMA=16 CM=.cg
+  10     0.0149      62.99   0.974x BM=32 BN=32 BK=1024 GM=4 KS=1 W=2 S=2 WPE=2 MFMA=16 CM=.cg
+
+Saved to: /apps/feiyue/rocm-optimization-skill/results/best_M16_N4096_K7168.json
+
+--- M=16, N=7168, K=2048 ---
+[aiter] import [module_aiter_core] under /sgl-workspace/aiter/aiter/jit/module_aiter_core.so
+GPU: AMD Instinct MI355X
+Shape: M=16, N=7168, K=2048
+Default config (tuned=False): {'BLOCK_SIZE_M': 32, 'BLOCK_SIZE_N': 32, 'BLOCK_SIZE_K': 1024, 'GROUP_SIZE_M': 4, 'num_warps': 4, 'num_stages': 3, 'waves_per_eu': 1, 'matrix_instr_nonkdim': 16, 'cache_modifier': '.cg', 'NUM_KSPLIT': 1}
+Baseline: 0.0134 ms, 34.97 TFLOPS
+
+=== Stage 1: Coarse tile sweep ===
+  Configs: 135
+  S1:[16/135] NEW BEST: 0.0134 ms, 35.04 TFLOPS -- BM=16 BN=64 BK=256 GM=1 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:Progress: 100/135 (13s, ~4s ETA)
+  S1:Done: 135 valid / 135 total in 17.6s
+
+=== Stage 2: Warps/stages/waves/cache sweep (top 6 tiles) ===
+  Configs: 576
+  S2:[4/576] NEW BEST: 0.0125 ms, 37.55 TFLOPS -- BM=16 BN=64 BK=256 GM=1 KS=1 W=2 S=1 WPE=2 MFMA=16 CM=.cg
+  S2:[8/576] NEW BEST: 0.0122 ms, 38.42 TFLOPS -- BM=16 BN=64 BK=256 GM=1 KS=1 W=2 S=1 WPE=4 MFMA=16 CM=.cg
+  S2:[10/576] NEW BEST: 0.0112 ms, 41.78 TFLOPS -- BM=16 BN=64 BK=256 GM=1 KS=1 W=2 S=2 WPE=1 MFMA=16 CM=.cg
+  S2:[42/576] NEW BEST: 0.0112 ms, 41.80 TFLOPS -- BM=16 BN=64 BK=256 GM=1 KS=1 W=4 S=2 WPE=1 MFMA=16 CM=.cg
+  S2:Progress: 100/576 (17s, ~83s ETA)
+  S2:Progress: 200/576 (39s, ~74s ETA)
+  S2:Progress: 300/576 (59s, ~54s ETA)
+  S2:Progress: 400/576 (77s, ~34s ETA)
+  S2:Progress: 500/576 (97s, ~15s ETA)
+  S2:Done: 576 valid / 576 total in 112.2s
+
+=== Stage 3: GROUP_SIZE_M / NUM_KSPLIT sweep (top 5 configs) ===
+  Configs: 140
+  S3:Progress: 100/140 (13s, ~5s ETA)
+  S3:Done: 140 valid / 140 total in 18.4s
+
+==========================================================================================
+TUNING COMPLETE
+==========================================================================================
+Shape: M=16, N=7168, K=2048
+Baseline: 0.0134 ms, 34.97 TFLOPS
+BEST:     0.0112 ms, 41.80 TFLOPS (1.195x)
+
+Top 10:
+Rank   Time(ms)     TFLOPS  vs Base Config
+------------------------------------------------------------------------------------------------------------------------
+   1     0.0112      41.80   1.195x BM=16 BN=64 BK=256 GM=1 KS=1 W=4 S=2 WPE=1 MFMA=16 CM=.cg
+   2     0.0112      41.78   1.195x BM=16 BN=64 BK=256 GM=1 KS=1 W=2 S=2 WPE=1 MFMA=16 CM=.cg
+   3     0.0114      41.29   1.181x BM=16 BN=64 BK=256 GM=1 KS=1 W=4 S=2 WPE=3 MFMA=16 CM=.cg
+   4     0.0114      41.13   1.176x BM=16 BN=64 BK=256 GM=1 KS=1 W=2 S=2 WPE=2 MFMA=16 CM=.cg
+   5     0.0114      41.05   1.174x BM=16 BN=64 BK=256 GM=1 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=.cg
+   6     0.0115      40.97   1.171x BM=16 BN=64 BK=256 GM=1 KS=1 W=2 S=4 WPE=3 MFMA=16 CM=.cg
+   7     0.0115      40.84   1.168x BM=16 BN=64 BK=256 GM=1 KS=1 W=2 S=4 WPE=4 MFMA=16 CM=.cg
+   8     0.0115      40.76   1.165x BM=16 BN=64 BK=256 GM=1 KS=1 W=2 S=3 WPE=2 MFMA=16 CM=.cg
+   9     0.0115      40.75   1.165x BM=16 BN=64 BK=256 GM=1 KS=1 W=2 S=3 WPE=1 MFMA=16 CM=.cg
+  10     0.0115      40.73   1.165x BM=16 BN=64 BK=256 GM=1 KS=1 W=2 S=2 WPE=4 MFMA=16 CM=.cg
+
+Saved to: /apps/feiyue/rocm-optimization-skill/results/best_M16_N7168_K2048.json
+
+--- M=32, N=4096, K=7168 ---
+[aiter] import [module_aiter_core] under /sgl-workspace/aiter/aiter/jit/module_aiter_core.so
+GPU: AMD Instinct MI355X
+Shape: M=32, N=4096, K=7168
+Default config (tuned=True): {'BLOCK_SIZE_M': 32, 'BLOCK_SIZE_N': 32, 'BLOCK_SIZE_K': 1024, 'GROUP_SIZE_M': 4, 'num_warps': 4, 'num_stages': 3, 'waves_per_eu': 1, 'matrix_instr_nonkdim': 16, 'cache_modifier': '.cg', 'NUM_KSPLIT': 1}
+Baseline: 0.0142 ms, 132.48 TFLOPS
+
+=== Stage 1: Coarse tile sweep ===
+  Configs: 324
+  S1:[25/324] NEW BEST: 0.0139 ms, 135.29 TFLOPS -- BM=16 BN=64 BK=512 GM=1 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:Progress: 100/324 (8s, ~18s ETA)
+  S1:Progress: 200/324 (22s, ~14s ETA)
+  S1:Progress: 300/324 (38s, ~3s ETA)
+  S1:Done: 324 valid / 324 total in 43.0s
+
+=== Stage 2: Warps/stages/waves/cache sweep (top 6 tiles) ===
+  Configs: 576
+  S2:Progress: 100/576 (7s, ~35s ETA)
+  S2:Progress: 200/576 (15s, ~28s ETA)
+  S2:Progress: 300/576 (24s, ~22s ETA)
+  S2:Progress: 400/576 (44s, ~19s ETA)
+  S2:Progress: 500/576 (61s, ~9s ETA)
+  S2:Done: 576 valid / 576 total in 67.3s
+
+=== Stage 3: GROUP_SIZE_M / NUM_KSPLIT sweep (top 5 configs) ===
+  Configs: 100
+  S3:Progress: 100/100 (15s, ~0s ETA)
+  S3:Done: 100 valid / 100 total in 14.8s
+
+==========================================================================================
+TUNING COMPLETE
+==========================================================================================
+Shape: M=32, N=4096, K=7168
+Baseline: 0.0142 ms, 132.48 TFLOPS
+BEST:     0.0139 ms, 135.29 TFLOPS (1.021x)
+
+Top 10:
+Rank   Time(ms)     TFLOPS  vs Base Config
+------------------------------------------------------------------------------------------------------------------------
+   1     0.0139     135.29   1.021x BM=16 BN=64 BK=512 GM=1 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+   2     0.0140     134.49   1.015x BM=32 BN=32 BK=1024 GM=8 KS=1 W=4 S=3 WPE=2 MFMA=16 CM=None
+   3     0.0142     132.76   1.002x BM=32 BN=32 BK=1024 GM=2 KS=1 W=4 S=3 WPE=2 MFMA=16 CM=None
+   4     0.0142     132.26   0.998x BM=16 BN=64 BK=512 GM=1 KS=1 W=4 S=4 WPE=3 MFMA=16 CM=None
+   5     0.0142     132.12   0.997x BM=16 BN=64 BK=512 GM=1 KS=1 W=4 S=3 WPE=3 MFMA=16 CM=None
+   6     0.0144     130.41   0.984x BM=32 BN=32 BK=1024 GM=4 KS=1 W=4 S=3 WPE=2 MFMA=16 CM=None
+   7     0.0145     129.74   0.979x BM=16 BN=64 BK=512 GM=1 KS=1 W=4 S=2 WPE=4 MFMA=16 CM=None
+   8     0.0145     129.46   0.977x BM=32 BN=32 BK=1024 GM=4 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=.cg
+   9     0.0146     128.97   0.974x BM=16 BN=64 BK=512 GM=1 KS=1 W=4 S=4 WPE=2 MFMA=16 CM=None
+  10     0.0146     128.68   0.971x BM=16 BN=64 BK=512 GM=1 KS=1 W=4 S=3 WPE=4 MFMA=16 CM=None
+
+Saved to: /apps/feiyue/rocm-optimization-skill/results/best_M32_N4096_K7168.json
+
+--- M=32, N=7168, K=2048 ---
+[aiter] import [module_aiter_core] under /sgl-workspace/aiter/aiter/jit/module_aiter_core.so
+GPU: AMD Instinct MI355X
+Shape: M=32, N=7168, K=2048
+Default config (tuned=False): {'BLOCK_SIZE_M': 32, 'BLOCK_SIZE_N': 32, 'BLOCK_SIZE_K': 1024, 'GROUP_SIZE_M': 4, 'num_warps': 4, 'num_stages': 3, 'waves_per_eu': 1, 'matrix_instr_nonkdim': 16, 'cache_modifier': '.cg', 'NUM_KSPLIT': 1}
+Baseline: 0.0139 ms, 67.36 TFLOPS
+
+=== Stage 1: Coarse tile sweep ===
+  Configs: 324
+  S1:[1/324] NEW BEST: 0.0130 ms, 72.17 TFLOPS -- BM=16 BN=64 BK=128 GM=1 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:[37/324] NEW BEST: 0.0130 ms, 72.17 TFLOPS -- BM=16 BN=128 BK=128 GM=1 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:[61/324] NEW BEST: 0.0129 ms, 72.65 TFLOPS -- BM=16 BN=128 BK=512 GM=1 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:[65/324] NEW BEST: 0.0129 ms, 72.98 TFLOPS -- BM=16 BN=128 BK=512 GM=2 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:Progress: 100/324 (8s, ~18s ETA)
+  S1:[134/324] NEW BEST: 0.0128 ms, 73.44 TFLOPS -- BM=32 BN=64 BK=256 GM=1 KS=1 W=4 S=2 WPE=2 MFMA=32 CM=None
+  S1:Progress: 200/324 (21s, ~13s ETA)
+  S1:Progress: 300/324 (36s, ~3s ETA)
+  S1:Done: 324 valid / 324 total in 39.7s
+
+=== Stage 2: Warps/stages/waves/cache sweep (top 6 tiles) ===
+  Configs: 576
+  S2:Progress: 100/576 (19s, ~88s ETA)
+  S2:Progress: 200/576 (27s, ~51s ETA)
+  S2:Progress: 300/576 (48s, ~44s ETA)
+  S2:[367/576] NEW BEST: 0.0105 ms, 89.62 TFLOPS -- BM=16 BN=128 BK=512 GM=1 KS=1 W=8 S=2 WPE=4 MFMA=16 CM=None
+  S2:Progress: 400/576 (68s, ~30s ETA)
+  S2:[492/576] NEW BEST: 0.0102 ms, 92.06 TFLOPS -- BM=32 BN=32 BK=1024 GM=4 KS=1 W=2 S=2 WPE=2 MFMA=16 CM=.cg
+  S2:[496/576] NEW BEST: 0.0100 ms, 94.36 TFLOPS -- BM=32 BN=32 BK=1024 GM=4 KS=1 W=2 S=2 WPE=4 MFMA=16 CM=.cg
+  S2:[498/576] NEW BEST: 0.0099 ms, 94.53 TFLOPS -- BM=32 BN=32 BK=1024 GM=4 KS=1 W=2 S=3 WPE=1 MFMA=16 CM=.cg
+  S2:Progress: 500/576 (84s, ~13s ETA)
+  S2:[502/576] NEW BEST: 0.0099 ms, 94.93 TFLOPS -- BM=32 BN=32 BK=1024 GM=4 KS=1 W=2 S=3 WPE=3 MFMA=16 CM=.cg
+  S2:[505/576] NEW BEST: 0.0099 ms, 95.12 TFLOPS -- BM=32 BN=32 BK=1024 GM=4 KS=1 W=2 S=4 WPE=1 MFMA=16 CM=None
+  S2:[509/576] NEW BEST: 0.0097 ms, 96.68 TFLOPS -- BM=32 BN=32 BK=1024 GM=4 KS=1 W=2 S=4 WPE=3 MFMA=16 CM=None
+  S2:[512/576] NEW BEST: 0.0096 ms, 97.73 TFLOPS -- BM=32 BN=32 BK=1024 GM=4 KS=1 W=2 S=4 WPE=4 MFMA=16 CM=.cg
+  S2:[524/576] NEW BEST: 0.0094 ms, 99.74 TFLOPS -- BM=32 BN=32 BK=1024 GM=4 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=.cg
+  S2:Done: 576 valid / 576 total in 89.8s
+
+=== Stage 3: GROUP_SIZE_M / NUM_KSPLIT sweep (top 5 configs) ===
+  Configs: 100
+  S3:Progress: 100/100 (13s, ~0s ETA)
+  S3:Done: 100 valid / 100 total in 13.1s
+
+==========================================================================================
+TUNING COMPLETE
+==========================================================================================
+Shape: M=32, N=7168, K=2048
+Baseline: 0.0139 ms, 67.36 TFLOPS
+BEST:     0.0094 ms, 99.74 TFLOPS (1.481x)
+
+Top 10:
+Rank   Time(ms)     TFLOPS  vs Base Config
+------------------------------------------------------------------------------------------------------------------------
+   1     0.0094      99.74   1.481x BM=32 BN=32 BK=1024 GM=4 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=.cg
+   2     0.0096      97.73   1.451x BM=32 BN=32 BK=1024 GM=4 KS=1 W=2 S=4 WPE=4 MFMA=16 CM=.cg
+   3     0.0096      97.63   1.449x BM=32 BN=32 BK=1024 GM=4 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+   4     0.0096      97.57   1.449x BM=32 BN=32 BK=1024 GM=4 KS=1 W=4 S=1 WPE=4 MFMA=16 CM=None
+   5     0.0097      96.71   1.436x BM=32 BN=32 BK=1024 GM=4 KS=1 W=4 S=4 WPE=2 MFMA=16 CM=None
+   6     0.0097      96.68   1.435x BM=32 BN=32 BK=1024 GM=4 KS=1 W=2 S=4 WPE=3 MFMA=16 CM=None
+   7     0.0097      96.67   1.435x BM=32 BN=32 BK=1024 GM=4 KS=1 W=4 S=2 WPE=3 MFMA=16 CM=.cg
+   8     0.0098      96.08   1.426x BM=32 BN=32 BK=1024 GM=4 KS=1 W=4 S=2 WPE=4 MFMA=16 CM=None
+   9     0.0098      95.75   1.421x BM=32 BN=32 BK=1024 GM=4 KS=1 W=4 S=3 WPE=2 MFMA=16 CM=.cg
+  10     0.0098      95.60   1.419x BM=32 BN=32 BK=1024 GM=4 KS=1 W=4 S=4 WPE=1 MFMA=16 CM=.cg
+
+Saved to: /apps/feiyue/rocm-optimization-skill/results/best_M32_N7168_K2048.json
+
+--- M=64, N=4096, K=7168 ---
+[aiter] import [module_aiter_core] under /sgl-workspace/aiter/aiter/jit/module_aiter_core.so
+GPU: AMD Instinct MI355X
+Shape: M=64, N=4096, K=7168
+Default config (tuned=True): {'BLOCK_SIZE_M': 32, 'BLOCK_SIZE_N': 32, 'BLOCK_SIZE_K': 512, 'GROUP_SIZE_M': 1, 'num_warps': 4, 'num_stages': 2, 'waves_per_eu': 2, 'matrix_instr_nonkdim': 16, 'cache_modifier': None, 'NUM_KSPLIT': 1}
+Baseline: 0.0141 ms, 267.05 TFLOPS
+
+=== Stage 1: Coarse tile sweep ===
+  Configs: 405
+  S1:[22/405] NEW BEST: 0.0140 ms, 267.62 TFLOPS -- BM=16 BN=64 BK=512 GM=2 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+  S1:Progress: 100/405 (8s, ~24s ETA)
+  S1:Progress: 200/405 (16s, ~16s ETA)
+  S1:Progress: 300/405 (24s, ~8s ETA)
+  S1:Progress: 400/405 (30s, ~0s ETA)
+  S1:Done: 387 valid / 405 total in 30.4s
+
+=== Stage 2: Warps/stages/waves/cache sweep (top 6 tiles) ===
+  Configs: 576
+  S2:Progress: 100/576 (8s, ~38s ETA)
+  S2:Progress: 200/576 (27s, ~51s ETA)
+  S2:[214/576] NEW BEST: 0.0140 ms, 268.15 TFLOPS -- BM=32 BN=64 BK=512 GM=2 KS=1 W=2 S=3 WPE=3 MFMA=16 CM=.cg
+  S2:Progress: 300/576 (35s, ~32s ETA)
+  S2:Progress: 400/576 (42s, ~18s ETA)
+  S2:Progress: 500/576 (52s, ~8s ETA)
+  S2:[502/576] NEW BEST: 0.0128 ms, 292.57 TFLOPS -- BM=32 BN=32 BK=512 GM=1 KS=1 W=2 S=3 WPE=3 MFMA=16 CM=.cg
+  S2:[503/576] NEW BEST: 0.0119 ms, 315.44 TFLOPS -- BM=32 BN=32 BK=512 GM=1 KS=1 W=2 S=3 WPE=4 MFMA=16 CM=None
+  S2:[505/576] NEW BEST: 0.0115 ms, 325.38 TFLOPS -- BM=32 BN=32 BK=512 GM=1 KS=1 W=2 S=4 WPE=1 MFMA=16 CM=None
+  S2:[507/576] NEW BEST: 0.0113 ms, 332.44 TFLOPS -- BM=32 BN=32 BK=512 GM=1 KS=1 W=2 S=4 WPE=2 MFMA=16 CM=None
+  S2:Done: 576 valid / 576 total in 65.2s
+
+=== Stage 3: GROUP_SIZE_M / NUM_KSPLIT sweep (top 5 configs) ===
+  Configs: 80
+  S3:Done: 80 valid / 80 total in 16.3s
+
+==========================================================================================
+TUNING COMPLETE
+==========================================================================================
+Shape: M=64, N=4096, K=7168
+Baseline: 0.0141 ms, 267.05 TFLOPS
+BEST:     0.0113 ms, 332.44 TFLOPS (1.245x)
+
+Top 10:
+Rank   Time(ms)     TFLOPS  vs Base Config
+------------------------------------------------------------------------------------------------------------------------
+   1     0.0113     332.44   1.245x BM=32 BN=32 BK=512 GM=1 KS=1 W=2 S=4 WPE=2 MFMA=16 CM=None
+   2     0.0115     325.38   1.218x BM=32 BN=32 BK=512 GM=1 KS=1 W=2 S=4 WPE=1 MFMA=16 CM=None
+   3     0.0116     322.87   1.209x BM=32 BN=32 BK=512 GM=1 KS=1 W=2 S=4 WPE=3 MFMA=16 CM=None
+   4     0.0119     315.44   1.181x BM=32 BN=32 BK=512 GM=1 KS=1 W=2 S=3 WPE=4 MFMA=16 CM=None
+   5     0.0121     311.21   1.165x BM=32 BN=32 BK=512 GM=1 KS=1 W=2 S=4 WPE=4 MFMA=16 CM=None
+   6     0.0124     302.37   1.132x BM=32 BN=32 BK=512 GM=1 KS=1 W=2 S=4 WPE=2 MFMA=16 CM=.cg
+   7     0.0125     299.82   1.123x BM=32 BN=32 BK=512 GM=1 KS=1 W=2 S=4 WPE=1 MFMA=16 CM=.cg
+   8     0.0126     297.45   1.114x BM=32 BN=32 BK=512 GM=1 KS=1 W=2 S=4 WPE=4 MFMA=16 CM=.cg
+   9     0.0128     292.57   1.096x BM=32 BN=32 BK=512 GM=1 KS=1 W=2 S=3 WPE=3 MFMA=16 CM=.cg
+  10     0.0129     291.50   1.092x BM=32 BN=32 BK=512 GM=1 KS=1 W=2 S=4 WPE=3 MFMA=16 CM=.cg
+
+Saved to: /apps/feiyue/rocm-optimization-skill/results/best_M64_N4096_K7168.json
+
+--- M=64, N=7168, K=2048 ---
+[aiter] import [module_aiter_core] under /sgl-workspace/aiter/aiter/jit/module_aiter_core.so
+GPU: AMD Instinct MI355X
+Shape: M=64, N=7168, K=2048
+Default config (tuned=False): {'BLOCK_SIZE_M': 32, 'BLOCK_SIZE_N': 32, 'BLOCK_SIZE_K': 512, 'GROUP_SIZE_M': 1, 'num_warps': 4, 'num_stages': 2, 'waves_per_eu': 2, 'matrix_instr_nonkdim': 16, 'cache_modifier': None, 'NUM_KSPLIT': 1}
+Baseline: 0.0135 ms, 139.06 TFLOPS
+
+=== Stage 1: Coarse tile sweep ===
+  Configs: 405
+  S1:Progress: 100/405 (8s, ~26s ETA)
+  S1:Progress: 200/405 (17s, ~17s ETA)
+  S1:Progress: 300/405 (25s, ~9s ETA)
+  S1:Progress: 400/405 (32s, ~0s ETA)
+  S1:Done: 387 valid / 405 total in 32.0s
+
+=== Stage 2: Warps/stages/waves/cache sweep (top 6 tiles) ===
+  Configs: 576
+  S2:Progress: 100/576 (19s, ~92s ETA)
+  S2:Progress: 200/576 (28s, ~52s ETA)
+  S2:Progress: 300/576 (37s, ~34s ETA)
+  S2:Progress: 400/576 (56s, ~25s ETA)
+  S2:Progress: 500/576 (75s, ~11s ETA)
+  S2:Done: 576 valid / 576 total in 89.8s
+
+=== Stage 3: GROUP_SIZE_M / NUM_KSPLIT sweep (top 5 configs) ===
+  Configs: 80
+  S3:Done: 80 valid / 80 total in 13.4s
+
+==========================================================================================
+TUNING COMPLETE
+==========================================================================================
+Shape: M=64, N=7168, K=2048
+Baseline: 0.0135 ms, 139.06 TFLOPS
+No improvement over baseline
+
+Top 10:
+Rank   Time(ms)     TFLOPS  vs Base Config
+------------------------------------------------------------------------------------------------------------------------
+   1     0.0152     123.22   0.886x BM=16 BN=128 BK=256 GM=2 KS=1 W=8 S=2 WPE=3 MFMA=16 CM=None
+   2     0.0153     122.85   0.883x BM=16 BN=128 BK=256 GM=2 KS=1 W=8 S=3 WPE=2 MFMA=16 CM=None
+   3     0.0154     122.36   0.880x BM=16 BN=256 BK=128 GM=4 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+   4     0.0154     122.31   0.880x BM=16 BN=128 BK=256 GM=2 KS=1 W=4 S=4 WPE=2 MFMA=16 CM=.cg
+   5     0.0154     121.78   0.876x BM=16 BN=128 BK=512 GM=2 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+   6     0.0154     121.74   0.875x BM=16 BN=128 BK=256 GM=2 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+   7     0.0156     120.64   0.868x BM=32 BN=128 BK=128 GM=1 KS=1 W=4 S=2 WPE=2 MFMA=32 CM=None
+   8     0.0156     120.52   0.867x BM=16 BN=256 BK=128 GM=2 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+   9     0.0156     120.26   0.865x BM=32 BN=128 BK=512 GM=4 KS=1 W=4 S=2 WPE=2 MFMA=32 CM=None
+  10     0.0156     120.18   0.864x BM=16 BN=128 BK=128 GM=2 KS=1 W=4 S=2 WPE=2 MFMA=16 CM=None
+
+Saved to: /apps/feiyue/rocm-optimization-skill/results/best_M64_N7168_K2048.json
+
+==========================================
+=== FINAL SUMMARY ===
+==========================================
+
+======================================================================
+  Shape: N=4096, K=7168
+======================================================================
+     M | Baseline(ms) | Base TFLOPS |   Best(ms) | Best TFLOPS | Speedup
+----------------------------------------------------------------------
+     1 |       0.0392 |        1.50 |     0.0153 |        3.84 |   2.56x
+     2 |       0.0394 |        2.98 |     0.0146 |        8.06 |   2.70x
+     4 |       0.0392 |        5.99 |     0.0149 |       15.76 |   2.63x
+     8 |       0.0394 |       11.92 |     0.0152 |       30.89 |   2.59x
+    16 |       0.0145 |       64.68 |     0.0145 |       64.60 |   1.00x
+    32 |       0.0142 |      132.48 |     0.0139 |      135.29 |   1.02x
+    64 |       0.0141 |      267.05 |     0.0113 |      332.44 |   1.24x
+   128 |       0.0142 |      529.45 |     0.0131 |      573.80 |   1.08x
+
+======================================================================
+  Shape: N=7168, K=2048
+======================================================================
+     M | Baseline(ms) | Base TFLOPS |   Best(ms) | Best TFLOPS | Speedup
+----------------------------------------------------------------------
+     1 |       0.0401 |        0.73 |     0.0107 |        2.74 |   3.74x
+     2 |       0.0386 |        1.52 |     0.0131 |        4.48 |   2.94x
+     4 |       0.0404 |        2.91 |     0.0112 |       10.49 |   3.61x
+     8 |       0.0414 |        5.68 |     0.0106 |       22.21 |   3.91x
+    16 |       0.0134 |       34.97 |     0.0112 |       41.80 |   1.20x
+    32 |       0.0139 |       67.36 |     0.0094 |       99.74 |   1.48x
+    64 |       0.0135 |      139.06 |     0.0152 |      123.22 |   0.89x
+   128 |       0.0152 |      247.86 |     0.0131 |      286.24 |   1.15x
+
+All results in: /apps/feiyue/rocm-optimization-skill/results/
+
+Completed at: Mon Apr 13 02:27:40 UTC 2026

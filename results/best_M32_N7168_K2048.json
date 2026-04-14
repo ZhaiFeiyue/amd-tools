@@ -1,0 +1,203 @@
+{
+  "shape": {
+    "M": 32,
+    "N": 7168,
+    "K": 2048
+  },
+  "gpu": "AMD Instinct MI355X",
+  "baseline": {
+    "ms": 0.01394867134679641,
+    "tflops": 67.35581279687835,
+    "config": {
+      "BLOCK_SIZE_M": 32,
+      "BLOCK_SIZE_N": 32,
+      "BLOCK_SIZE_K": 1024,
+      "GROUP_SIZE_M": 4,
+      "num_warps": 4,
+      "num_stages": 3,
+      "waves_per_eu": 1,
+      "matrix_instr_nonkdim": 16,
+      "cache_modifier": ".cg",
+      "NUM_KSPLIT": 1
+    }
+  },
+  "best": {
+    "ms": 0.009419684454687181,
+    "tflops": 99.74050622603374,
+    "config": {
+      "BLOCK_SIZE_M": 32,
+      "BLOCK_SIZE_N": 32,
+      "BLOCK_SIZE_K": 1024,
+      "GROUP_SIZE_M": 4,
+      "num_warps": 4,
+      "num_stages": 2,
+      "waves_per_eu": 2,
+      "matrix_instr_nonkdim": 16,
+      "cache_modifier": ".cg",
+      "NUM_KSPLIT": 1
+    }
+  },
+  "speedup": 1.480800276686087,
+  "top10": [
+    {
+      "ms": 0.009419684454687181,
+      "tflops": 99.74050622603374,
+      "config": {
+        "BLOCK_SIZE_M": 32,
+        "BLOCK_SIZE_N": 32,
+        "BLOCK_SIZE_K": 1024,
+        "GROUP_SIZE_M": 4,
+        "num_warps": 4,
+        "num_stages": 2,
+        "waves_per_eu": 2,
+        "matrix_instr_nonkdim": 16,
+        "cache_modifier": ".cg",
+        "NUM_KSPLIT": 1
+      }
+    },
+    {
+      "ms": 0.009613687196305712,
+      "tflops": 97.72775801994416,
+      "config": {
+        "BLOCK_SIZE_M": 32,
+        "BLOCK_SIZE_N": 32,
+        "BLOCK_SIZE_K": 1024,
+        "GROUP_SIZE_M": 4,
+        "num_warps": 2,
+        "num_stages": 4,
+        "waves_per_eu": 4,
+        "matrix_instr_nonkdim": 16,
+        "cache_modifier": ".cg",
+        "NUM_KSPLIT": 1
+      }
+    },
+    {
+      "ms": 0.009623497956437589,
+      "tflops": 97.62812859242207,
+      "config": {
+        "BLOCK_SIZE_M": 32,
+        "BLOCK_SIZE_N": 32,
+        "BLOCK_SIZE_K": 1024,
+        "GROUP_SIZE_M": 4,
+        "num_warps": 4,
+        "num_stages": 2,
+        "waves_per_eu": 2,
+        "matrix_instr_nonkdim": 16,
+        "cache_modifier": null,
+        "NUM_KSPLIT": 1
+      }
+    },
+    {
+      "ms": 0.00962944920970596,
+      "tflops": 97.56779183725389,
+      "config": {
+        "BLOCK_SIZE_M": 32,
+        "BLOCK_SIZE_N": 32,
+        "BLOCK_SIZE_K": 1024,
+        "GROUP_SIZE_M": 4,
+        "num_warps": 4,
+        "num_stages": 1,
+        "waves_per_eu": 4,
+        "matrix_instr_nonkdim": 16,
+        "cache_modifier": null,
+        "NUM_KSPLIT": 1
+      }
+    },
+    {
+      "ms": 0.009714670636379224,
+      "tflops": 96.7118836208092,
+      "config": {
+        "BLOCK_SIZE_M": 32,
+        "BLOCK_SIZE_N": 32,
+        "BLOCK_SIZE_K": 1024,
+        "GROUP_SIZE_M": 4,
+        "num_warps": 4,
+        "num_stages": 4,
+        "waves_per_eu": 2,
+        "matrix_instr_nonkdim": 16,
+        "cache_modifier": null,
+        "NUM_KSPLIT": 1
+      }
+    },
+    {
+      "ms": 0.009717626820926688,
+      "tflops": 96.68246304506738,
+      "config": {
+        "BLOCK_SIZE_M": 32,
+        "BLOCK_SIZE_N": 32,
+        "BLOCK_SIZE_K": 1024,
+        "GROUP_SIZE_M": 4,
+        "num_warps": 2,
+        "num_stages": 4,
+        "waves_per_eu": 3,
+        "matrix_instr_nonkdim": 16,
+        "cache_modifier": null,
+        "NUM_KSPLIT": 1
+      }
+    },
+    {
+      "ms": 0.00971864687163834,
+      "tflops": 96.67231543742858,
+      "config": {
+        "BLOCK_SIZE_M": 32,
+        "BLOCK_SIZE_N": 32,
+        "BLOCK_SIZE_K": 1024,
+        "GROUP_SIZE_M": 4,
+        "num_warps": 4,
+        "num_stages": 2,
+        "waves_per_eu": 3,
+        "matrix_instr_nonkdim": 16,
+        "cache_modifier": ".cg",
+        "NUM_KSPLIT": 1
+      }
+    },
+    {
+      "ms": 0.009778893749096983,
+      "tflops": 96.07672607003825,
+      "config": {
+        "BLOCK_SIZE_M": 32,
+        "BLOCK_SIZE_N": 32,
+        "BLOCK_SIZE_K": 1024,
+        "GROUP_SIZE_M": 4,
+        "num_warps": 4,
+        "num_stages": 2,
+        "waves_per_eu": 4,
+        "matrix_instr_nonkdim": 16,
+        "cache_modifier": null,
+        "NUM_KSPLIT": 1
+      }
+    },
+    {
+      "ms": 0.009812769732393319,
+      "tflops": 95.74504667102299,
+      "config": {
+        "BLOCK_SIZE_M": 32,
+        "BLOCK_SIZE_N": 32,
+        "BLOCK_SIZE_K": 1024,
+        "GROUP_SIZE_M": 4,
+        "num_warps": 4,
+        "num_stages": 3,
+        "waves_per_eu": 2,
+        "matrix_instr_nonkdim": 16,
+        "cache_modifier": ".cg",
+        "NUM_KSPLIT": 1
+      }
+    },
+    {
+      "ms": 0.009827558328461258,
+      "tflops": 95.60096868406023,
+      "config": {
+        "BLOCK_SIZE_M": 32,
+        "BLOCK_SIZE_N": 32,
+        "BLOCK_SIZE_K": 1024,
+        "GROUP_SIZE_M": 4,
+        "num_warps": 4,
+        "num_stages": 4,
+        "waves_per_eu": 1,
+        "matrix_instr_nonkdim": 16,
+        "cache_modifier": ".cg",
+        "NUM_KSPLIT": 1
+      }
+    }
+  ]
+}
