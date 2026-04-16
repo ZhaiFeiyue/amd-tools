@@ -104,7 +104,7 @@ Reconstruct the author's thinking path using **constraint-driven derivation**,
 NOT just method description. The reader should understand the shape of the
 design space — which paths are blocked and why — before seeing the solution.
 
-- **时代定位 (Era Positioning):** ★ Where does this paper sit in the
+- **时代定位 (Era Positioning):** Where does this paper sit in the
   field's evolution? Is it picking low-hanging fruit or entering "deep
   water"? What prior optimizations have been exhausted? Example:
   "2024年LLM推理的low hanging fruits几乎被采摘殆尽，NanoFlow代表
@@ -119,10 +119,10 @@ design space — which paths are blocked and why — before seeing the solution.
   — Build a **feasibility matrix** when applicable (rows=alternatives, cols=criteria).
 - **破局 (Insight):** What was the author's "aha moment"? The core intuition.
   — 👉 Insert a plain-language analogy to explain this intuition.
-- **黑科技识别 (Core Technical Barrier):** ★ Identify the ONE hardest-to-
+- **核心技术壁垒 (Core Technical Barrier):** Identify the ONE hardest-to-
   replicate technique that makes the whole method actually work in
   practice. This is not the high-level idea but the low-level engineering
-  trick. Example: "NanoFlow的黑科技是custom execution unit scheduling
+  insight. Example: "NanoFlow的核心壁垒是custom execution unit scheduling
   ——限制kernel执行的SM个数。仅用108个SM中的35个(32%)，网络
   kernel即可实现92%峰值性能——这个非线性关系是整个方案能work的
   根本原因。" Every paper has one; find it and call it out explicitly.
@@ -131,7 +131,7 @@ design space — which paths are blocked and why — before seeing the solution.
   evidence? Under what conditions might they break? When uncertain,
   explicitly say so: "这部分笔者也不是十分确定" — honest uncertainty
   builds reader trust more than false confidence.
-- **设计绑定批判 (Design Binding Critique):** ★ What prerequisites does
+- **设计绑定批判 (Design Binding Critique):** What prerequisites does
   the method FORCE? List all forced dependencies (e.g. "NanoFlow
   强制绑定了chunked prefill和张量并行——这两个条件不再绑定时，
   很多设计可能会面临挑战"). Discuss what happens if these prerequisites
@@ -140,7 +140,7 @@ design space — which paths are blocked and why — before seeing the solution.
 - **实践上下文 (Deployment Context):** Where does this method apply in
   real systems? (e.g. prefill vs decode, training vs inference, which
   GPU architectures benefit most, ecosystem integration)
-- **生态影响追踪 (Ecosystem Influence):** ★ Trace the paper's influence
+- **生态影响追踪 (Ecosystem Influence):** Trace the paper's influence
   on downstream systems. Has it been adopted by vLLM, SGLang,
   TRT-LLM, or other frameworks? Did subsequent papers (e.g.
   DeepSeekV3) adopt similar ideas? This connects the paper to the

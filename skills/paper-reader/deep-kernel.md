@@ -66,7 +66,7 @@ Details analysis 以论文的图表和算法为中心展开。核心规则：
 - Memory hierarchy exploitation: registers → shared/LDS → L2 → HBM
 - What is the theoretical peak throughput for this operation on target hardware?
 
-### 3. Design Space & Constraint Analysis ★NEW
+### 3. Design Space & Constraint Analysis
 
 Before analyzing what the paper chose, systematically map out what was
 **rejected and why**. This section is the most important analytical
@@ -107,7 +107,7 @@ Build a table mapping alternatives to criteria:
   honest uncertainty ("这部分笔者也不是十分确定") builds more trust
   than false confidence.
 
-**3e. Core Technical Barrier ("黑科技")** ★NEW
+**3e. Core Technical Barrier**
 - Identify the ONE technique that is hardest to replicate and most
   critical to making the system actually work in practice.
 - This is NOT the high-level idea but the low-level engineering trick.
@@ -116,7 +116,7 @@ Build a table mapping alternatives to criteria:
 - Example: "仅用108个SM中的35个(32%)，网络kernel即可实现92%峰值
   性能——这个非线性关系是nano-batch overlap能work的根本原因"
 
-**3f. Design Binding Critique** ★NEW
+**3f. Design Binding Critique**
 - What prerequisites does the method FORCE? List all forced dependencies.
 - For each binding: what flexibility is lost? What happens if the
   prerequisite changes? (e.g. "如果P-D分离，chunked prefill不再适用，
@@ -160,7 +160,7 @@ Identify which techniques the paper uses:
 | Integration | Standalone vs. part of a library (CUTLASS, CK, Triton)? |
 | Compiler dependency | Requires specific CUDA/ROCm version? |
 
-### 8. Deployment Context ★NEW
+### 8. Deployment Context
 
 Analyze where this kernel fits in real production systems:
 
@@ -177,7 +177,7 @@ Analyze where this kernel fits in real production systems:
   ComfyUI, HuggingFace, etc.? Drop-in replacement or requires changes?
 - **Ecosystem maturity**: pip-installable? Active maintenance? Community
   adoption? Who is using it in production?
-- **Downstream influence** ★NEW: Has this work been adopted by major
+- **Downstream influence**: Has this work been adopted by major
   frameworks (vLLM, SGLang, TRT-LLM, etc.)? Did subsequent papers
   (e.g. DeepSeekV3) adopt similar ideas? Cite specific versions, PRs,
   or tech report sections as evidence.

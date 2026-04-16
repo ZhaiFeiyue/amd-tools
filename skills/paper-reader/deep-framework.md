@@ -104,7 +104,7 @@ Identify the TOP 3 data movement bottlenecks:
 2. **Frequency**: once per request, once per token, once per batch?
 3. **Is it overlapped** with compute, or blocking?
 
-### 3. Design Space & Constraint Analysis ★NEW
+### 3. Design Space & Constraint Analysis
 
 Before analyzing what the system chose, map out what was rejected and why.
 
@@ -123,13 +123,13 @@ Before analyzing what the system chose, map out what was rejected and why.
 - Under what conditions might each assumption break?
 - When uncertain, state so explicitly.
 
-**3d. Core Technical Barrier ("黑科技")** ★NEW
+**3d. Core Technical Barrier**
 - Identify the ONE hardest-to-replicate technique. Not the high-level
   idea, but the low-level engineering trick (e.g. custom SM scheduling,
   specific memory layout trick, compiler pass).
 - Support with data showing WHY it works.
 
-**3e. Design Binding Critique** ★NEW
+**3e. Design Binding Critique**
 - What prerequisites does this system FORCE? (e.g. "requires chunked
   prefill + tensor parallelism", "only works with GQA models")
 - For each binding: what flexibility is lost?
@@ -246,13 +246,13 @@ Compare to existing systems:
 
 Fill in what is known. Mark unknowns explicitly.
 
-### 11. Adoption, Maturity & Ecosystem Influence ★UPDATED
+### 11. Adoption, Maturity & Ecosystem Influence
 
 - Open source? License?
 - Community size, contributor count, release cadence?
 - Production deployments mentioned?
 - What would it take to adopt this in an existing stack?
-- **Downstream influence** ★NEW: Has this work been adopted by major
+- **Downstream influence**: Has this work been adopted by major
   frameworks (vLLM, SGLang, TRT-LLM, etc.)? Cite specific versions,
   PRs, or release notes. Did subsequent papers or tech reports (e.g.
   DeepSeekV3) adopt similar ideas? This connects the paper to the

@@ -29,7 +29,7 @@ If any item is missing, use `[未在论文中明确说明]` — never fabricate.
 
 ### Section 1: 论文导读面板 (Top, collapsible)
 
-- **Hero Figure** ★NEW: Select the single most representative figure from
+- **Hero Figure**: Select the single most representative figure from
   the paper and display it prominently at the very top of the guide panel,
   ABOVE the title. This figure should:
   - Be the "soul diagram" of the paper — usually Figure 1 or the main
@@ -66,7 +66,7 @@ If any item is missing, use `[未在论文中明确说明]` — never fabricate.
 
 Seven sub-module cards:
 
-**A · 时代定位** (100-150 chars) ★NEW
+**A · 时代定位** (100-150 chars)
 - Where does this paper sit in the field's evolution timeline?
 - Is it picking low-hanging fruit, or entering "deep water" (深水区)?
 - What prior optimizations have been exhausted that make this work necessary?
@@ -90,7 +90,7 @@ Seven sub-module cards:
 - Core research question in "能否…" or "如何…" format
 - Why hasn't this been solved before?
 
-**D · 设计空间约束** (150-200 chars) ★NEW
+**D · 设计空间约束** (150-200 chars)
 - What alternative approaches were available? List 3-5 rejected alternatives.
 - For each rejected alternative, explain **why it's infeasible** with
   mathematical/hardware proof. Use "为何不可X？" format.
@@ -117,7 +117,7 @@ Seven sub-module cards:
 - Each contribution: 【type tag】method/theory/dataset/system + content + which pain point from C it solves
 - Rating card: 新颖性 / 实用性 / 影响力预测 (stars, with 1-sentence rationale)
 
-**H · 设计绑定** (100-150 chars) ★NEW
+**H · 设计绑定** (100-150 chars)
 - What prerequisites does this method FORCE? List all forced dependencies.
 - Example: "NanoFlow 强制绑定了 chunked prefill 和张量并行"
 - For each binding, explain: what flexibility is lost? What alternative
@@ -147,10 +147,10 @@ Below diagram — four explanation cards:
   math/hardware constraints (dimension mismatch, instruction unavailable)
 - **"Why [this design choice]?"** — connect to data distribution and
   hardware specs (e.g. "Smooth K后分布均匀→INT8均匀量化契合")
-- **"黑科技 (Core Technical Barrier)"** ★NEW — identify the ONE
+- **"核心技术壁垒 (Core Technical Barrier)"** — identify the ONE
   hardest-to-replicate technique that makes the whole system actually
-  work. Not the high-level idea, but the low-level engineering trick
-  that would take months to reproduce. Example: "NanoFlow的黑科技是
+  work. Not the high-level idea, but the low-level engineering insight
+  that would take months to reproduce. Example: "NanoFlow的核心壁垒是
   custom execution unit scheduling——仅用32% SM就达92%网络峰值
   性能，这个非线性关系是整个方案能work的根本原因。" Support with
   data from the paper if available.
@@ -163,7 +163,7 @@ Below diagram — four explanation cards:
 2 of the 6 cards MUST be **constraint derivation** cards (proving why
 alternatives fail) and at least 1 MUST be an **assumption challenge** card.
 
-**Card Type A: Constraint Derivation (至少 2 张)** ★PRIORITY
+**Card Type A: Constraint Derivation (至少 2 张)**
 - "为什么不能用 [替代方案]？" — derive from first principles (math, hardware,
   information theory) why the alternative fails
 - Show dimensional analysis, hardware instruction constraints, or numerical
@@ -171,7 +171,7 @@ alternatives fail) and at least 1 MUST be an **assumption challenge** card.
 - Example: "为什么不能 per-channel 量化 K？因为 QK^T 是 N×N，反量化时
   没有 d 维度来使用 per-channel 的 scale factor"
 
-**Card Type B: Assumption Challenge (至少 1 张)** ★NEW
+**Card Type B: Assumption Challenge (至少 1 张)**
 - Identify a key assumption the paper makes (explicit or implicit)
 - Ask: "这个假设在什么条件下成立？什么条件下可能失效？"
 - Look for independent evidence: other papers, experiments, or theoretical
@@ -269,7 +269,7 @@ Generate 6-8 improvement directions:
 
 **A. 改进方向选择矩阵** (table): direction | difficulty | engineering effort | needs new data | suitable for
 
-**B. 实践部署上下文** ★NEW: where exactly in a real production system
+**B. 实践部署上下文**: where exactly in a real production system
 does this method fit? Be specific about:
 - Which inference stage (prefill/decode/chunked-prefill)?
 - Which training stage (forward/backward/optimizer)?
@@ -279,7 +279,7 @@ does this method fit? Be specific about:
 - Hardware-specific "buffs" or "debuffs" (e.g. "RTX4090 FP16 accum is
   a unique buff; H100 FP8 TC makes INT8 less advantageous")
 
-**C. 生态影响追踪** ★NEW: Trace the paper's real-world influence:
+**C. 生态影响追踪**: Trace the paper's real-world influence:
 - Which downstream systems adopted this paper's ideas? (vLLM, SGLang,
   TRT-LLM, DeepSeek, etc.) — provide specific version numbers or PRs.
 - Did subsequent papers cite or build upon this work? Name them.
