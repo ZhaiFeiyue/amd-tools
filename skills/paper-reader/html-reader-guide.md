@@ -1,5 +1,21 @@
 # Per-Paper HTML Reader Generation Guide
 
+## ⚠️ Phase 10 is MANDATORY — no silent skips
+
+Real incident (Seedance 2.0): the agent decided unilaterally that "this
+paper doesn't warrant the full reader" and skipped Phase 10 entirely,
+mentioning it only in passing in the final report. The user did NOT
+authorise this skip. Going forward:
+
+- **Every paper deep-read produces a reader HTML at
+  `~/.cursor/paper-db/readers/{paper-id}-reader.html`.**
+- If the paper is genuinely too thin for the full 11-section format
+  (e.g. pure release announcement / model card with < 10 pages of
+  analysable content), use the **minimal-template fallback** described
+  in SKILL.md Phase 10 — but you still produce the file.
+- The completeness checker in `--strict` mode will fail if this file
+  is missing. Final Output to user is blocked until it exists.
+
 ## Role
 
 You are an **academic reading designer** and **senior deep learning professor**
@@ -127,7 +143,129 @@ Seven sub-module cards:
 
 ### Section 5: 🏗 核心架构图解
 
-**SVG re-drawn architecture diagram** (LLM cannot extract PDF images):
+**Primary option — Mermaid inline (DEFAULT, 2026-04-21 policy change)**:
+
+For most LLM / framework / algorithm papers, the reader's Section 5
+should embed the paper's architecture diagrams as **Mermaid fenced
+blocks** (same as notes §架构 N). Copy the mermaid source from the
+paper's notes file into the reader HTML as:
+
+```html
+<div class="arch-mermaid">
+  <pre class="mermaid">
+  flowchart TB
+    ...exact source from notes...
+  </pre>
+</div>
+```
+
+Load mermaid.js from CDN in the reader `<head>`:
+
+```html
+<script type="module">
+import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'base',
+  themeVariables: {
+    fontFamily: "'IBM Plex Sans', 'Noto Sans SC', sans-serif",
+    fontSize: '14px',
+    primaryColor: '#eff6ff', primaryTextColor: '#1e293b',
+    primaryBorderColor: '#2563eb', lineColor: '#475569',
+    secondaryColor: '#fef3c7', tertiaryColor: '#f0fdf4',
+    background: '#ffffff'
+  },
+  flowchart: { htmlLabels: true, curve: 'basis' },
+  securityLevel: 'loose'
+});
+mermaid.run({ querySelector: '.mermaid' });
+</script>
+```
+
+Why Mermaid is the default now (2026-04-21 policy change):
+
+- LLM generation accuracy very high (flat DSL, not nested XML)
+- Line-level diff friendly (not XML file-reflow)
+- Native SVG render, no lazy-load bootstrap complexity
+- Auto-layout (dagre), no manual x/y coordinate math
+- Already matches `papers/<id>.html` styling (same mermaid.js config)
+
+See `~/.cursor/skills/paper-reader/diagram-tool-choice.md` for full
+selection matrix and template library.
+
+**Fallback — drawio embed (when you need multi-page tab switching)**:
+
+If the paper's notes have an associated `.drawio` file under
+`/apps/feiyue/upstream/zhaifeiyue.github.io/assets/<paper-id>_*.drawio`
+that specifically uses the multi-page layout (≥ 3 coordinated views with
+tab switching, e.g. Qwen3-Omni-style 7-page ladder), the per-paper HTML
+reader may embed the same drawio. The drawio is interactive, zoomable,
+pan-able, and tab-switchable across sub-modules — useful for deep-read
+navigation across many views.
+
+**⚠️ Use the lazy-load pattern, NOT inline `data-mxgraph` JSON.**
+
+Real incident (2026-04-21B, Kimi K2.6 reader): the earlier guide text
+said to embed via `data-mxgraph="{xml: ...}"` as an HTML attribute.
+This works only for tiny drawios. K2.6's 57 KB drawio → 84 KB
+HTML-escaped attribute value → `viewer-static.min.js` silently failed
+to parse, canvas rendered blank. See `incidents.md` 2026-04-21B for
+full postmortem.
+
+**Correct pattern** (same as sync.sh uses for `papers/*.html`, proven
+to work for drawios of any size):
+
+```html
+<!-- Step 1: raw XML sits in textContent of a hidden div (no escape limits) -->
+<div id="drawio-xml-{paper-id}-arch"
+     class="drawio-xml-source"
+     style="display:none !important;" aria-hidden="true">{HTML-escaped drawio XML, ampersands and < > escaped only}</div>
+
+<!-- Step 2: empty placeholder, NO data-mxgraph attribute yet -->
+<div class="mxgraph mxg-lazy"
+     data-xml-source="drawio-xml-{paper-id}-arch"
+     data-page="0"
+     style="width:100%;aspect-ratio:1500/900;border:1px solid #ddd;
+            border-radius:8px;background:#fff;overflow:hidden;"></div>
+```
+
+Bootstrap JS at the end of `<body>` (BEFORE loading viewer-static):
+
+```html
+<script defer>
+document.addEventListener('DOMContentLoaded', function () {
+  document.querySelectorAll('.mxgraph.mxg-lazy').forEach(function (el) {
+    var src = document.getElementById(el.dataset.xmlSource);
+    if (!src) return;
+    el.setAttribute('data-mxgraph', JSON.stringify({
+      highlight: '#0000ff', nav: true, resize: false,
+      toolbar: 'zoom layers tags lightbox pages',
+      'toolbar-position': 'top',
+      fit: 1, 'auto-fit': 1, border: 5,
+      'page-visible': false, lightbox: false, edit: '_blank',
+      xml: src.textContent.trim(),
+      page: parseInt(el.dataset.page || '0', 10)
+    }));
+    el.classList.remove('mxg-lazy');
+  });
+});
+</script>
+<script defer src="https://viewer.diagrams.net/js/viewer-static.min.js"></script>
+```
+
+Why: `textContent` of a `<div>` has no practical size limit and no
+HTML-attribute double-escape ambiguity. The bootstrap reads the XML
+*at runtime in memory*, builds the viewer config as a JS object,
+then sets the `data-mxgraph` attribute (which at that point is a
+clean JSON string). The viewer-static script picks up the configured
+`.mxgraph` divs on load.
+
+**DO NOT**: embed `<div class="mxgraph" data-mxgraph="{...escaped JSON...}">`
+inline — this is ONLY safe for drawios < ~10 KB and fails silently
+above that. All real model-architecture drawios exceed 10 KB.
+
+**Fallback — hand-drawn SVG** (only when no drawio exists and a quick
+sketch is appropriate for this single-file reader format):
 
 Content:
 - Complete forward pass from input to all outputs
@@ -141,6 +279,9 @@ Style:
 - `<marker>` for multi-color arrows (one color per output path)
 - Key modules use roughen filter; secondary use light filter
 - Color-code by module type (encoder/backbone/prediction head/output)
+
+> **NEVER use ASCII box art** for Section 5. The only choices are drawio
+> (preferred) or SVG (fallback). See SKILL.md "Universal Diagram Rule".
 
 Below diagram — four explanation cards:
 - **"Why not [alternative]?"** — prove alternative's infeasibility with
@@ -318,6 +459,61 @@ Per card:
 - Chinese annotations: `Noto Sans SC`
 - Code/formulas: `JetBrains Mono`
 
+### Math Formula Rendering (KaTeX — MANDATORY)
+
+ALL mathematical formulas MUST be rendered with KaTeX. Never use plain text or
+monospace font to display formulas. Include these CDN resources in `<head>`:
+
+```html
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {
+    delimiters: [
+      {left: '$$', right: '$$', display: true},
+      {left: '\\\\[', right: '\\\\]', display: true},
+      {left: '$', right: '$', display: false},
+      {left: '\\\\(', right: '\\\\)', display: false}
+    ],
+    throwOnError: false
+  });"></script>
+```
+
+**Formula writing rules:**
+
+- **Inline formulas**: wrap with `\(...\)` or `$...$`
+  Example: `The loss is \(L = -\sum_i y_i \log p_i\)`
+- **Display (block) formulas**: wrap with `\[...\]` or `$$...$$`
+  Example: `\[\text{Attention}(Q,K,V) = \text{softmax}\left(\frac{QK^\top}{\sqrt{d_k}}\right)V\]`
+- **Formula with Chinese annotation**: use a wrapper div:
+  ```html
+  <div class="formula-block">
+    \[\gamma(K) = K - \text{mean}(K)\]
+    <div class="formula-anno">其中 \(\text{mean}(K) = \frac{1}{N}\sum_t K[t,:]\)，形状 1×d</div>
+  </div>
+  ```
+- **NEVER** write formulas as plain text like `F_k = F_0 * alpha^{k/(1+r)}`
+- **NEVER** use Unicode math symbols (∑, ∏, √) as formula substitutes
+- Use `\text{}` for text labels inside formulas, `\operatorname{}` for custom operators
+
+**Formula block CSS** (include in your `<style>`):
+
+```css
+.formula-block {
+  background: rgba(27,42,74,0.03);
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin: 16px 0;
+  overflow-x: auto;
+}
+.formula-anno {
+  font-size: 13px;
+  color: var(--mt, #6b7280);
+  font-family: 'Noto Sans SC', sans-serif;
+  margin-top: 8px;
+}
+```
+
 ### Interactions
 - Annotation card hover → original paragraph highlight (`data-anno` attribute)
 - Highlighted term hover → tooltip Chinese explanation
@@ -331,9 +527,24 @@ Per card:
 ## Output Requirements
 
 - Single complete `.html` file, all CSS/JS inlined
-- Fonts: Google Fonts CDN only, no other external dependencies
+- Fonts: Google Fonts CDN only; KaTeX from jsdelivr CDN (the only allowed exception)
 - All 11 sections present — none may be omitted
+- ALL math formulas rendered via KaTeX — no plain-text formulas
 - Code has block comments, clear structure
 - ALL content must be based on the paper's real content — never fabricate data or methods
 - Citations use §section or Tab./Fig. numbers
 - Save to: `~/.cursor/paper-db/readers/{paper-id}-reader.html`
+
+## ✅ Self-verification before declaring Phase 10 done
+
+After writing the file, do all of:
+
+1. `ls -la ~/.cursor/paper-db/readers/{paper-id}-reader.html` — confirms file
+   exists and shows size (≥ 8 KB target).
+2. `Read` the file — confirm Section 1 has the hero figure, Section 5 has the
+   architecture (drawio embed or SVG), Section 11 has the worksheet cards.
+3. Visually scan: are all 11 sections present? Open the file in a browser if
+   feasible and verify KaTeX renders, drawio embed loads.
+4. Run `python3 ~/.cursor/paper-db/tools/check_paper_completeness.py
+   {paper-id} --strict` — this will explicitly verify the reader file is
+   present and large enough, alongside all other paper artifacts.
