@@ -237,6 +237,40 @@ register budget, specific scheduler, etc.) For each binding:
 - Does any library paper pay a *different* price to achieve similar
   gains without this binding?
 
+### 4d. Era positioning (时代定位) — where does this paper sit in the field's evolution?
+
+Answer 3 questions using the note library as the evolution timeline:
+
+1. **Low-hanging fruit or deep water?** At the time this paper appeared,
+   had the obvious optimizations in this sub-area already been done?
+   If the answer is "the easy stuff was picked years ago, this paper
+   is navigating the residual tension", that's deep water and the
+   contribution is worth more. If "this is the first paper noticing
+   the problem", the optimization space may still be rich.
+2. **Which predecessors are being superseded / extended?** Point to
+   specific library papers that this one obsoletes, extends, or
+   explicitly argues against. If none, call it out — isolated papers
+   are warning signs (novel, but also unreplicated).
+3. **Is the author picking the low-hanging fruit of a NEW regime** (e.g.
+   hybrid-attention serving just became feasible) vs the residual
+   fruit of an old one (e.g. further tuning dense-attention serving)?
+   New regimes typically admit several quick wins in a short window;
+   old regimes admit only narrow gains.
+
+Format example (from PrfaaS viewpoint):
+
+> **Era**: cross-DC PD disaggregation. Prior PD work (Mooncake [22],
+> Splitwise [21], DistServe [37]) picked the intra-DC low-hanging
+> fruit 2022–2024. Hybrid attention (Kimi Linear [26], 2025) opened
+> a **new regime** where cross-DC becomes tractable; PrfaaS is the
+> first paper in the library to pick fruit in this new regime. Expect
+> 2–3 more papers in this regime within 12 months before it saturates.
+
+If the library only has 1 paper in the area, state: "first entry in
+the library for this era — era positioning deferred until ≥ 2 papers
+exist". Do not fabricate an evolution timeline from a single data
+point.
+
 ## 5. 未探索方向 (Unexplored directions — hybrid + trade-off axes)
 
 ### 5a. Trade-off 轴 identification

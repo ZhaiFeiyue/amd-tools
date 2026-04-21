@@ -545,6 +545,50 @@ and carry it into Stage 4 rather than inlining it into notes.
 | 6 | **论证链 (paper-internal)** | ≥3-step table (step / premise + citation / conclusion / evidence) with load-bearing markers. **Pure reconstruction of the paper's own argument** — no attacks, no rebuttals, no ecosystem checks here (those are Stage 4). | ≥3 steps, not dichotomy |
 | 7 | **实现 cross-reference** | Any public code at all — paper's own repo, runtime it extends, baseline it compares against — MUST be walked. File:line citations required. | ≥ 1 code citation OR explicit `[实现未公开]` |
 
+### 核心技术壁垒 (Core Technical Barrier) — identify across §2 Q2 + §7
+
+Every serious paper has **ONE** lowest-level engineering insight that
+makes the whole method actually work in practice. It is NOT the
+high-level idea (that's §2 Q2's headline), NOT the formal model
+(that's §4), NOT what the paper declined to open-source (that's §7.4).
+It is the **single hardest-to-replicate operational insight** that
+distinguishes "knows the trick" from "can ship the trick".
+
+Examples:
+
+- **NanoFlow** (framework): custom execution-unit scheduling — limiting
+  kernels to 35/108 SMs still hits 92% peak for network kernels;
+  "the non-linear 32%→92% relationship is why the whole scheme works"
+- **FlashAttention** (kernel): tiling + recomputation to keep softmax
+  in SRAM; the trick isn't "use SRAM" (obvious) but "compute softmax
+  incrementally across tiles so you never materialize the N×N matrix"
+- **PrfaaS** (framework): layer-wise prefill pipelining — so PrfaaS's
+  `min(compute, egress)` in Eq.3 actually holds in practice, not the
+  slower harmonic mean
+
+**Placement in notes**:
+
+- §2 Q2 — append ONE sentence naming the barrier ("核心壁垒 is X")
+- §7 — dedicated paragraph describing what makes it hard to replicate
+  (engineering effort, tribal knowledge, hardware-specific tuning)
+
+**Relationship to other sections**:
+
+- **vs §4 作者证明**: 作者证明 is the formal model (why it SHOULD work
+  mathematically); 核心壁垒 is the engineering insight (why it DOES
+  work operationally). A paper can have both, one, or neither.
+- **vs §7.4 未公开点**: 未公开点 lists what's not released publicly.
+  核心壁垒 is independent of release — it's the ONE insight that's
+  hard regardless of whether the code is open. Often they overlap,
+  not always.
+
+**If you cannot identify ONE barrier** → either the paper is
+expository / survey (no barrier by design) or you haven't read it
+deeply enough. Re-examine the preread's §3 Method and §4 Experiments
+for the non-obvious trick the paper understates. Never fake a barrier.
+
+---
+
 ### 作者证明 — the 6 minimum checks (section §4)
 
 1. Notation table reproduced (not just referenced as "see Table N")

@@ -96,12 +96,30 @@ Point-by-point comparison table vs the closest competitor (e.g. MI355X vs
 B200). At minimum: peak FP8 / peak FP16 / HBM capacity / HBM BW / NVLink
 BW / TDP / launch date / $.
 
-## §11 Spec sheet — complete
+## §11 Deployment context (实践上下文) — where this chip actually lives
+
+- **Cluster shape**: 8-GPU node (DGX / OAM) / rack (72 GPU GB200
+  NVL72) / pod (multi-rack with NVL rail) / DC-scale (10k+ GPUs).
+  Paper's spec assumes which shape?
+- **Power / cooling regime**: air-cooled (fits existing DCs) / liquid
+  cold-plate (GB200, MI300) / immersion (rare). Cooling choice gates
+  rack density and total deployable count.
+- **Announced / shipping customers**: which hyperscalers / AI labs
+  have announced orders, and at what volume? (Stated in the paper
+  or press release — don't speculate.)
+- **Workload fit**: training-first / inference-first / mixed? Some
+  chips (Rubin CPX, LPU) are explicitly phase-specialized; others
+  (Blackwell B200, MI355X) target both.
+- **Timeline**: already shipping / sampling / tape-out / roadmap.
+  Roadmap chips' numbers are projections and should be flagged as
+  such in notes.
+
+## §12 Spec sheet — complete
 
 Single large table with every official number. This is the artifact
 engineers copy-paste when sizing a cluster.
 
-## §12 作者证明 — Hardware-specific asks
+## §13 作者证明 — Hardware-specific asks
 
 Hardware whitepapers don't have a "Theorem" — their "proof" is the
 performance projection model. Reproduce it:
@@ -113,7 +131,7 @@ performance projection model. Reproduce it:
 If the whitepaper provides no projection numbers (marketing-only), mark
 **无形式化作者证明 — 仅广告数字**.
 
-## §13 Hardware → Software forward implication (MANDATORY for hardware)
+## §14 Hardware → Software forward implication (MANDATORY for hardware)
 
 **This is the reverse of the kernel / cluster SW→HW rule.** What NEW
 software can be written because of this HW?

@@ -88,6 +88,22 @@ hiding the regime where they lose. Surface it.
 - What does it force downstream? (e.g. "requires chunked prefill + TP
   bound together" — see PrfaaS / NanoFlow)
 
+## §10 Deployment context (实践上下文) — where in a real system this lives
+
+Framework papers are serving systems, not algorithms. Locate concretely
+where the method sits in a production deployment:
+
+- **Serving stage**: prefill only / decode only / both / orchestration layer
+- **Concurrency regime**: low-concurrency (1–8 reqs) / mid / high (≥64)
+- **Hardware affinity**: which GPU generation benefits most / least,
+  and why (tensor core availability, HBM BW, chiplet topology)
+- **Ecosystem integration**: which runtime does it plug into
+  (vLLM / SGLang / TRT-LLM / DeepSpeed-Inference / custom)?
+  What's the integration cost — patch to scheduler? new executor?
+  fork maintained separately?
+- **Migration path**: a shop running vLLM today, what do they change
+  to adopt this framework? (config flag? library swap? custom ops?)
+
 ## §12 Software → Hardware reverse implication — CONDITIONAL
 
 Trigger only if the framework is **hardware-proximal**: persistent

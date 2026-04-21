@@ -75,7 +75,23 @@ For each technique in the paper, record:
 - What would a CK / Triton port look like? Which optimization survives,
   which doesn't?
 
-## §8 Source walkthrough (mandatory if code public)
+## §8 Deployment context (实践上下文) — where this kernel is called in production
+
+Kernels don't run alone. Pin down:
+
+- **Serving stack integration**: does this kernel plug into vLLM /
+  SGLang / DeepSpeed-Inference / TRT-LLM attention path? Replaces
+  which existing op (FA2 / FA3 / cuDNN SDPA / flash-decoding)?
+- **Regime specialization**: for what **(seq_len, batch, head_dim,
+  num_heads)** tuple was the kernel tuned? Does it degrade outside?
+- **Prefill / decode split**: is it a prefill kernel (large batch × N²)
+  or a decode kernel (tiny batch × 1 token, memory-BW bound)?
+- **Fusion scope**: what ops does it fuse — softmax+matmul only, or
+  RoPE + QKV + attn + O-proj? What's the residual dependency?
+- **Launch shape**: production deployments typically launch at what
+  grid × block shape? Matches the tuned config?
+
+## §9 Source walkthrough (mandatory if code public)
 
 Minimum 3 file:line citations:
 1. The kernel entry (launcher / host stub)
@@ -84,7 +100,7 @@ Minimum 3 file:line citations:
 
 Explain the critical 10–30 lines with inline comments. Skip the boilerplate.
 
-## §9 Software → Hardware reverse implication (MANDATORY for kernel)
+## §10 Software → Hardware reverse implication (MANDATORY for kernel)
 
 What does this kernel's optimization reveal about what future hardware
 should provide?

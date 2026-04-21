@@ -80,13 +80,30 @@ In addition to the 6 base checks (SKILL.md):
 - Power (W/switch, W/port), cooling
 - Rack density (GPUs/rack, GPUs/MW)
 
-## §10 Scalability / future-proofing
+## §10 Deployment context (实践上下文) — who actually builds clusters like this
+
+- **Deployer profile**: hyperscaler (AWS / Google / Azure) /
+  specialized AI cloud (CoreWeave / Lambda) / national lab / research
+  cluster / on-prem enterprise. Different scale levels, different
+  tolerance for custom fabric.
+- **Workload mix**: training (all-reduce heavy) / inference (p2p +
+  disaggregation traffic) / storage (checkpoint read/write) / mixed.
+  Paper's topology assumptions hold for which mix?
+- **Greenfield vs retrofit**: paper's design assumes new build or
+  overlays on existing fabric (e.g., adds RoCE on top of Ethernet,
+  or needs full IB stack)? This matters for adoption cost.
+- **Failure model**: paper's fault tolerance assumes what scale
+  (≤ 100 nodes casual failures / ≥ 10k nodes frequent failures)?
+- **Vendor dependency**: does this rely on a specific NIC / switch
+  vendor (NVIDIA / Broadcom / Intel / in-house ASIC)?
+
+## §11 Scalability / future-proofing
 
 - At what scale (node count) does the topology / protocol start to
   degrade?
 - Next-gen HW (UE, XDR IB, 400G+ RoCE, NVLink-6) — what changes?
 
-## §11 Software → Hardware reverse implication (MANDATORY for cluster)
+## §12 Software → Hardware reverse implication (MANDATORY for cluster)
 
 What NIC / fabric features does the software argue for?
 - SHARP / in-network reduction?
