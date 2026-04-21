@@ -142,15 +142,39 @@ arXiv with HTML).
 
 ## Stage 2 — READ (section-by-section, anchored to paper's own structure)
 
+### 核心约束 — Stage 2 整体纪律（忠于原文，不做任何取舍）
+
+> This is THE constraint of READ. Every other rule in this section is
+> a refinement of it. Read it out loud before starting every new paper.
+
+- **不允许做任何取舍决策**。"这一段不重要 / 这张图不核心 / 这条方程
+  decorative" — 全部是 Stage 3 的判断，不是 Stage 2 的。
+- **输出**：`~/.cursor/paper-db/preread/{paper-id}.md` — free-form, 无
+  结构，无长度限制。不是最终交付物，是 Stage 3 的原材料 + 审计痕迹。
+- **必须覆盖** (6 items):
+  1. 逐节走一遍，按论文原序
+  2. 每条方程 + 变量含义 + 物理解读 + `[load-bearing]` / `[decorative]` 标签
+  3. 每张表逐行观察
+  4. 每张图完整描述
+  5. 每条显式 claim + 其证据
+  6. 开放性惊讶点
+- **禁止** (6 items):
+  1. 写 TL;DR / Q1/Q2/Q3 / 任何 Stage-3 的 7 节字段
+  2. 预选"重要图" —— 所有图都记，3–5 张的挑选在 Stage 3
+  3. 跳读 appendix / limitations / related work
+  4. 合并相邻 §（"反正同主题"）
+  5. 重排 § 顺序（论文 §4 是实验就先写 §4，哪怕你觉得应该先 §5）
+  6. 分类 / 取舍 / 综合（所有 taxonomic 操作留给 Stage 3）
+
 **Goal**: build complete paper context before any distillation decision
 is made. You are NOT allowed to start Stage 3 (the 7 sections) until
 READ is done and its exit criteria pass.
 
-**Output**: `~/.cursor/paper-db/preread/{paper-id}.md` — a long-form
-file whose **top-level structure mirrors the paper's own section
-numbering and titles**. You are not allowed to reorder, merge, or
-skip the paper's sections. The preread is an audit trail of what the
-authors actually wrote (in their order), not your synthesis.
+The preread is an audit trail of what the authors actually wrote (in
+their order). Your job is to **restate + describe**, not to **categorize
++ judge**. If you feel the urge to label something as "this is a
+constraint the paper introduces" or "this is the key insight" — stop.
+That's Stage 3 thinking.
 
 ### File structure — one block per paper §
 
@@ -173,12 +197,6 @@ authors actually wrote (in their order), not your synthesis.
 ### 章节小结
 {2–4 sentences: what is this section's role in the paper's arc?}
 
-### 核心约束
-{What design-space constraints does this section introduce, explicitly or
-implicitly? Every "X is the only way because Y" / "we cannot do Z because
-W" belongs here. If the section introduces no constraint, write
-"N/A — 本节 {role}, 未对设计空间施加约束".}
-
 ---
 
 ## §1 Introduction
@@ -189,50 +207,60 @@ W" belongs here. If the section introduces no constraint, write
 ### 章节小结
 ...
 
-### 核心约束
-...
-
 ---
 
 ## §2 Related Work / Background
-... (same 3-block pattern)
+... (same 2-block pattern)
+
+... (continue for every numbered section the paper has, including
+appendices and supplementary material)
 
 ---
 
-## §3 Method
-... (same)
+## 全篇开放性惊讶点
 
-... (continue for every numbered section the paper has, including
-appendices and supplementary material if present)
+{bulleted list of things that surprised you, contradicted your priors,
+or were asserted without obvious proof — one bullet each, cross-refs
+to paper §. Aggregated here because surprises are usually cross-section
+observations, not localizable to one §. Stage 3 uses these as candidate
+attack / open-question surfaces.}
+
+---
+
+## Exit criteria self-check
+
+... (6 checkbox list, see below)
 ```
 
-### The three required sub-blocks per paper § (details)
+### The two required sub-blocks per paper § (details)
 
 **1. 逐段复述 (paragraph-by-paragraph restatement)**
 
-- One bullet per paragraph (or per logical sub-paragraph for long ones)
-- 2–4 sentences each, in plain language, in the paper's order
+This is where every item from the "必须覆盖" list lands. One § block,
+all restatement content inline in paper order.
+
+- One bullet per paragraph (or per logical sub-paragraph for long ones),
+  2–4 sentences each, in plain language, in the paper's order
 - Quote verbatim any sentence that is a headline claim, a formal
   definition, or a surprising admission. Wrap quotes in `> " ... "`
-- Include every equation that appears in this §, with:
-  - The LaTeX reproduction
-  - Each variable's meaning (notation table)
-  - The physical / intuitive interpretation
-  - A tag: `[load-bearing]` (reused in later §§ or in case-study
-    derivation) or `[decorative]` (scene-setting, not reused). Unsure →
-    tag `[load-bearing]` by default and revisit in Stage 3.
-- Include every table in this §, row-by-row:
-  - Column semantics
-  - Best cell per column + runner-up gap
-  - Any row that breaks the trend
-- Include every figure in this §, fully described:
-  - Caption verbatim
-  - Components / axes / legend
-  - What it demonstrates
-  - Which other figs / tables / equations it is coordinated with
-- Include every explicit claim that this § makes, paired with the
-  evidence the authors cite for it (other §§, tables, figures, or
-  external references)
+- **Every equation** that appears in this §:
+  - LaTeX reproduction
+  - Each variable's meaning (reproduce notation table if one exists)
+  - Physical / intuitive interpretation
+  - Tag: `[load-bearing]` (reused downstream) or `[decorative]`
+    (scene-setting only). Unsure → `[load-bearing]` by default; revisit
+    in Stage 3.
+- **Every table**, row-by-row: column semantics, best cell per column,
+  runner-up gap, any row that breaks the trend
+- **Every figure**, fully described: caption verbatim, components /
+  axes / legend, what it demonstrates, which other figs / tables /
+  equations it is coordinated with
+- **Every explicit claim** paired with the evidence the authors cite
+  (other §§, tables, figures, external references)
+
+Do NOT categorize or judge content. If the paper says "we cannot do X
+because Y" — reproduce the sentence, note the evidence. Do not create
+a separate "constraint" bucket; that is Stage 3's taxonomy task.
 
 **2. 章节小结 (section summary)**
 
@@ -243,57 +271,20 @@ appendices and supplementary material if present)
 - What does the reader now know that they didn't before this §?
 - What must the reader carry forward to understand subsequent §§?
 
-The summary is **content-only**. Do not yet judge whether the § is
-"important" or "skippable" — that's Stage 3's job.
+Content-only. Do NOT yet judge whether the § is "important" or
+"skippable" — that's Stage 3.
 
-**3. 核心约束 (design-space constraints introduced here) — MANDATORY**
+### Final top-level section: 全篇开放性惊讶点
 
-This is the block that keeps READ from degenerating into a neutral
-paraphrase. Every § either introduces, uses, or assumes a constraint
-— surface it explicitly. Examples of constraints to capture:
+After every paper § block is written, add one final top-level section
+collecting all "surprises" across the paper. Each bullet:
+- 1 sentence describing the surprise
+- Cross-ref to paper §(paragraph) where it appears
+- (optional) 1 sentence on why it's surprising
 
-- **Hardware constraints**: "MHA's KV cache scales O(N · H · D), so at
-  N=128K, H=128, D=128, KV = 1 GB/request → incompatible with 80 GB
-  GPU at batch > 75" (§2 Background)
-- **Algorithmic constraints**: "Per-channel quantization of K fails
-  because QKᵀ produces N×N output with no d-dimension to apply the
-  per-channel scale" (§3 Method, rejection-of-alternatives)
-- **Data / training constraints**: "Joint multimodal training requires
-  ≥10% vision tokens in the mix, else vision capability regresses
-  within 50B tokens" (§4 Training)
-- **Experimental constraints**: "H100 FP8 tensor core makes INT8
-  comparison weaker than FP16 baseline — all numbers reported assume
-  FP16 accumulator" (§5 Experiments)
-
-Format each constraint as: `constraint statement → why (evidence from
-this § or cross-reference) → implication for design space`.
-
-If a § genuinely introduces no constraint (e.g. §1 Introduction is often
-pure motivation), write: `N/A — 本节 {motivation / narrative / survey /
-...}, 未对设计空间施加约束`. Do NOT leave the block empty.
-
-### Rules during READ (what NOT to do)
-
-- **Do NOT** write TL;DR, Q1/Q2/Q3, Core Contribution, or any of the 9
-  sections yet. If you feel the urge, tell yourself "that decision
-  needs Stage 3 context, not enough information yet."
-- **Do NOT** pre-select "important" figures / tables / equations. All
-  of them go into the preread; the 3–5 picks happen in Stage 3.
-- **Do NOT** reorder the paper's sections. If the paper's §4 is
-  Experiments and §5 is Method, your preread has §4 = Experiments and
-  §5 = Method. Respect the authors' structure; your job is to annotate
-  it, not refactor it.
-- **Do NOT** merge two adjacent sections because "they're on the same
-  topic". Same §.5 subsections can be grouped if the paper explicitly
-  nested them, but top-level § are always separate blocks.
-- **Do NOT** make hybrid-disambiguation, category, or code cross-reference
-  decisions yet. The classification was already done in Stage 1 from the
-  abstract/title; if READ reveals the classification was wrong, flag it
-  at the end of preread and re-run Stage 1.2 before entering Stage 3.
-- **Do NOT** skim appendices, limitations, related work, or ablations.
-  These are where load-bearing details hide. If a section truly adds
-  nothing, write one sentence saying so in 章节小结 — never silently
-  skip.
+These are the raw material for Stage 4 CONNECT's attack surface and
+open-question analysis. Do NOT resolve or rebut them in Stage 2; just
+flag them.
 
 ### Category-specific READ hints
 
@@ -305,7 +296,7 @@ deep-llm.md will remind you to capture every `config.json` field, every
 per-module parameter count, every KV cache size statement. Go back and
 add missing details to the relevant paper § block.
 
-### Exit criteria (must pass before Stage 3)
+### Exit criteria (6 checkboxes from memory)
 
 Without re-opening the paper, you should be able to:
 
@@ -320,8 +311,6 @@ Without re-opening the paper, you should be able to:
 - [ ] Name ≥2 rows in the main results table where the paper **loses**
       to a baseline (every paper has these; if you can't find any,
       you missed them)
-- [ ] Every paper § has non-empty 核心约束 block (either a real
-      constraint or an explicit `N/A — {reason}` line)
 
 If any checkbox fails → re-read the relevant § and extend the preread.
 Partial understanding at this stage produces the classic PrfaaS failure
