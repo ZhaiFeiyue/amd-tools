@@ -16,20 +16,26 @@ Four stages. Nine notes sections. One HTML. No silent skips.
 
 ```
 ABSORB  →  READ  →  WRITE  →  PUBLISH
-fetch      full      9-section    sync + commit
-classify   scratch   notes        + completeness
-extract    notes     (from        gate
-figures    (no       scratch,
-           cuts)     pick &
-                     distill)
+fetch      preread   9-section    sync + commit
+classify   per §     notes        + completeness
+extract    逐段 +     (distill     gate
+figures    小结 +     from
+           约束       preread)
 ```
 
 **The READ-before-WRITE discipline** is the single most important change
-in v0.2.1: LLMs cannot decide "what's important" while reading; that
+in v0.2: LLMs cannot decide "what's important" while reading; that
 decision needs to be made from a position of full paper context.
 Forcing structured output during reading produces selective skimming,
-missed cross-references, and downgraded details. The scratch notes from
-Stage 2 are the raw material; Stage 3 picks and distills from them.
+missed cross-references, and downgraded details.
+
+The **preread** (Stage 2 output) is structured per-paper-§, in the
+authors' original order. Each § block contains three mandatory
+sub-blocks: 逐段复述 (paragraph restatement) + 章节小结 (section
+summary) + 核心约束 (design-space constraints introduced in this §).
+This prevents the agent from silently re-ordering, selectively reading,
+or skipping "less relevant" sections. The preread is the raw material;
+Stage 3 WRITE picks and distills from it.
 
 **Before every paper read**: skim `~/.cursor/paper-db/incidents.md` for past
 failure modes. Every rationale / postmortem / historical "why" lives there.
@@ -116,39 +122,137 @@ arXiv with HTML).
 
 ---
 
-## Stage 2 — READ (exhaustive read-through, NO structured output yet)
+## Stage 2 — READ (section-by-section, anchored to paper's own structure)
 
 **Goal**: build complete paper context before any distillation decision
 is made. You are NOT allowed to start Stage 3 (the 9 sections) until
 READ is done and its exit criteria pass.
 
-**Output**: `~/.cursor/paper-db/notes-scratch/{paper-id}.md` — a
-free-form long-form dump. No section template, no length cap, no
-aesthetics. Just thorough. The scratch is an audit trail, not a
-deliverable to the user — but it must exist on disk.
+**Output**: `~/.cursor/paper-db/preread/{paper-id}.md` — a long-form
+file whose **top-level structure mirrors the paper's own section
+numbering and titles**. You are not allowed to reorder, merge, or
+skip the paper's sections. The preread is an audit trail of what the
+authors actually wrote (in their order), not your synthesis.
 
-### What the scratch must contain
+### File structure — one block per paper §
 
-1. **Section-by-section walk** (in the author's order). For each paper
-   §N, write 3–8 sentences summarizing what it says in plain language,
-   plus any quote you want to preserve verbatim.
-2. **Every equation, reproduced**. Copy it, state what each variable
-   means, state the physical interpretation, state what follows from
-   it. Tag each equation as either **load-bearing** (used in downstream
-   reasoning or case-study derivation) or **decorative** (scene-setting
-   only). Unsure → tag as load-bearing and revisit.
-3. **Every table, row by row**. For each: column semantics, the best
-   cell per column, runner-up gap, which row breaks the trend, is the
-   baseline fairly configured.
-4. **Every figure, fully described**. Caption, components, what it
-   shows, how it supports the surrounding text, which other figures or
-   tables it is coordinated with (a result in Fig.7 often re-cites
-   Table 3 — note both sides).
-5. **Every explicit claim with its evidence**. "Authors claim X (§N
-   para Y); evidence cited: Fig.Z + Table K + the number A from §M."
-6. **Open surprises**. Anything you didn't expect, anything that
-   contradicts your priors, anything asserted without obvious proof.
-   These become §6 论证链 attack candidates later.
+```markdown
+# {Title} — preread
+
+> Paper: {title}
+> Date read: {YYYY-MM-DD}
+> Paper sections: {N}
+> Category (from Stage 1): {category}
+
+---
+
+## §0 Abstract
+
+### 逐段复述
+- Para 1: ...
+- Para 2: ...
+
+### 章节小结
+{2–4 sentences: what is this section's role in the paper's arc?}
+
+### 核心约束
+{What design-space constraints does this section introduce, explicitly or
+implicitly? Every "X is the only way because Y" / "we cannot do Z because
+W" belongs here. If the section introduces no constraint, write
+"N/A — 本节 {role}, 未对设计空间施加约束".}
+
+---
+
+## §1 Introduction
+
+### 逐段复述
+...
+
+### 章节小结
+...
+
+### 核心约束
+...
+
+---
+
+## §2 Related Work / Background
+... (same 3-block pattern)
+
+---
+
+## §3 Method
+... (same)
+
+... (continue for every numbered section the paper has, including
+appendices and supplementary material if present)
+```
+
+### The three required sub-blocks per paper § (details)
+
+**1. 逐段复述 (paragraph-by-paragraph restatement)**
+
+- One bullet per paragraph (or per logical sub-paragraph for long ones)
+- 2–4 sentences each, in plain language, in the paper's order
+- Quote verbatim any sentence that is a headline claim, a formal
+  definition, or a surprising admission. Wrap quotes in `> " ... "`
+- Include every equation that appears in this §, with:
+  - The LaTeX reproduction
+  - Each variable's meaning (notation table)
+  - The physical / intuitive interpretation
+  - A tag: `[load-bearing]` (reused in later §§ or in case-study
+    derivation) or `[decorative]` (scene-setting, not reused). Unsure →
+    tag `[load-bearing]` by default and revisit in Stage 3.
+- Include every table in this §, row-by-row:
+  - Column semantics
+  - Best cell per column + runner-up gap
+  - Any row that breaks the trend
+- Include every figure in this §, fully described:
+  - Caption verbatim
+  - Components / axes / legend
+  - What it demonstrates
+  - Which other figs / tables / equations it is coordinated with
+- Include every explicit claim that this § makes, paired with the
+  evidence the authors cite for it (other §§, tables, figures, or
+  external references)
+
+**2. 章节小结 (section summary)**
+
+2–4 sentences answering:
+- What role does this § play in the paper's overall narrative?
+  (motivation / background / method-core / model / experiments /
+  ablation / discussion / limitation / appendix-detail)
+- What does the reader now know that they didn't before this §?
+- What must the reader carry forward to understand subsequent §§?
+
+The summary is **content-only**. Do not yet judge whether the § is
+"important" or "skippable" — that's Stage 3's job.
+
+**3. 核心约束 (design-space constraints introduced here) — MANDATORY**
+
+This is the block that keeps READ from degenerating into a neutral
+paraphrase. Every § either introduces, uses, or assumes a constraint
+— surface it explicitly. Examples of constraints to capture:
+
+- **Hardware constraints**: "MHA's KV cache scales O(N · H · D), so at
+  N=128K, H=128, D=128, KV = 1 GB/request → incompatible with 80 GB
+  GPU at batch > 75" (§2 Background)
+- **Algorithmic constraints**: "Per-channel quantization of K fails
+  because QKᵀ produces N×N output with no d-dimension to apply the
+  per-channel scale" (§3 Method, rejection-of-alternatives)
+- **Data / training constraints**: "Joint multimodal training requires
+  ≥10% vision tokens in the mix, else vision capability regresses
+  within 50B tokens" (§4 Training)
+- **Experimental constraints**: "H100 FP8 tensor core makes INT8
+  comparison weaker than FP16 baseline — all numbers reported assume
+  FP16 accumulator" (§5 Experiments)
+
+Format each constraint as: `constraint statement → why (evidence from
+this § or cross-reference) → implication for design space`.
+
+If a § genuinely introduces no constraint (e.g. §1 Introduction is often
+pure motivation), write: `N/A — 本节 {motivation / narrative / survey /
+...}, 未对设计空间施加约束`. Do NOT leave the block empty.
 
 ### Rules during READ (what NOT to do)
 
@@ -156,15 +260,22 @@ deliverable to the user — but it must exist on disk.
   sections yet. If you feel the urge, tell yourself "that decision
   needs Stage 3 context, not enough information yet."
 - **Do NOT** pre-select "important" figures / tables / equations. All
-  of them go into the scratch; the 3–5 picks happen in Stage 3.
+  of them go into the preread; the 3–5 picks happen in Stage 3.
+- **Do NOT** reorder the paper's sections. If the paper's §4 is
+  Experiments and §5 is Method, your preread has §4 = Experiments and
+  §5 = Method. Respect the authors' structure; your job is to annotate
+  it, not refactor it.
+- **Do NOT** merge two adjacent sections because "they're on the same
+  topic". Same §.5 subsections can be grouped if the paper explicitly
+  nested them, but top-level § are always separate blocks.
 - **Do NOT** make hybrid-disambiguation, category, or code cross-reference
   decisions yet. The classification was already done in Stage 1 from the
   abstract/title; if READ reveals the classification was wrong, flag it
-  and re-run Stage 1.2 before entering Stage 3.
-- **Do NOT** skim sections you judge "less relevant". Appendices,
-  limitations, related work, and ablations are where the load-bearing
-  details hide. If a section truly adds nothing, write one sentence
-  saying so; don't silently skip.
+  at the end of preread and re-run Stage 1.2 before entering Stage 3.
+- **Do NOT** skim appendices, limitations, related work, or ablations.
+  These are where load-bearing details hide. If a section truly adds
+  nothing, write one sentence saying so in 章节小结 — never silently
+  skip.
 
 ### Category-specific READ hints
 
@@ -173,7 +284,8 @@ After the section-by-section walk is complete, open the matching
 detail you should have captured but missed. The deep-*.md guides are
 **READ-time checklists** as much as WRITE-time templates. Example:
 deep-llm.md will remind you to capture every `config.json` field, every
-per-module parameter count, every KV cache size statement.
+per-module parameter count, every KV cache size statement. Go back and
+add missing details to the relevant paper § block.
 
 ### Exit criteria (must pass before Stage 3)
 
@@ -190,34 +302,40 @@ Without re-opening the paper, you should be able to:
 - [ ] Name ≥2 rows in the main results table where the paper **loses**
       to a baseline (every paper has these; if you can't find any,
       you missed them)
+- [ ] Every paper § has non-empty 核心约束 block (either a real
+      constraint or an explicit `N/A — {reason}` line)
 
-If any checkbox fails → re-read the relevant part. Partial understanding
-at this stage produces the classic PrfaaS failure (author证明 reduced
-to "Eq.X 给出..." hand-wave because reader didn't see the model →
-case-study mapping).
+If any checkbox fails → re-read the relevant § and extend the preread.
+Partial understanding at this stage produces the classic PrfaaS failure
+(author证明 reduced to "Eq.X 给出..." hand-wave because reader didn't
+see the model → case-study mapping).
 
 ---
 
-## Stage 3 — WRITE (distill scratch into the 9 sections)
+## Stage 3 — WRITE (distill preread into the 9 sections)
 
-Now read your `notes-scratch/{id}.md` back and produce the real
+Now read your `preread/{id}.md` back and produce the real
 `~/.cursor/paper-db/notes/{paper-id}.md` with the following **9
 mandatory sections**. Category-specific extensions go in
 `deep-<category>.md`.
 
 **Discipline**: Stage 3 is where you DELETE, PROMOTE, and STRUCTURE —
-in that order. From the scratch:
+in that order. From the preread:
 - **Delete** content that's redundant, tangential, or pure background
 - **Promote** the 3–5 most important figures into §5, the load-bearing
-  equations into §4, the ≥3-step chain into §6, the binding-worthy
-  claims into §8 — the scratch had them all; here you pick
+  equations (tagged in preread) into §4, the ≥3-step chain into §6,
+  the binding-worthy claims into §8 — the preread had them all; here
+  you pick
+- **Aggregate 核心约束**: the preread has constraints scattered across
+  every paper §. In Stage 3 you consolidate them into §6's argument
+  chain (one constraint → one step) and §8's binding analysis
 - **Structure** into the 9 sections below
 
-If a 9-section field would be empty because the scratch doesn't have
+If a 9-section field would be empty because the preread doesn't have
 the raw material → the READ was incomplete, not the paper. Go back to
-Stage 2 and capture the missing detail, rather than writing `[论文未
-披露]` prematurely. `[论文未披露]` is reserved for things the paper
-genuinely does not disclose, verified via Stage 2 coverage.
+Stage 2 and extend the relevant paper § block, rather than writing
+`[论文未披露]` prematurely. `[论文未披露]` is reserved for things the
+paper genuinely does not disclose, verified via Stage 2 coverage.
 
 ### The 9 sections
 
@@ -372,12 +490,15 @@ prose. Delete all matches before file write.
 
 5. **Final completeness gate** —
    ```bash
-   ls ~/.cursor/paper-db/notes-scratch/{id}.md  # scratch must exist
+   ls ~/.cursor/paper-db/preread/{id}.md  # preread must exist
    python3 ~/.cursor/paper-db/tools/check_paper_completeness.py {id} --strict
    ```
-   Scratch presence is a soft signal — not yet enforced by the checker,
+   Preread presence is a soft signal — not yet enforced by the checker,
    but its absence means Stage 2 was skipped, which is a process
-   failure even if Stage 3 output looks OK.
+   failure even if Stage 3 output looks OK. Once the checker is updated
+   to enforce preread, it will also verify: (a) the preread's top-level
+   § count matches the paper's actual § count (±1), (b) every § block
+   has non-empty 逐段复述 / 章节小结 / 核心约束 sub-blocks.
    If `check_paper_completeness.py` exits ≠ 0, fix every blocker before
    presenting the Final Output to the user. No exceptions.
 
