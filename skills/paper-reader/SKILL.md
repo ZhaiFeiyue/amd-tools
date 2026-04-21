@@ -151,39 +151,64 @@ arXiv with HTML).
   decorative" — 全部是 Stage 3 的判断，不是 Stage 2 的。
 - **输出**：`~/.cursor/paper-db/preread/{paper-id}.md` — free-form, 无
   结构，无长度限制。不是最终交付物，是 Stage 3 的原材料 + 审计痕迹。
-- **必须覆盖** (6 items):
-  1. 逐节走一遍，按论文原序
-  2. 每条方程 + 变量含义 + 物理解读 + `[load-bearing]` / `[decorative]` 标签
-  3. 每张表逐行观察
-  4. 每张图完整描述
-  5. 每条显式 claim + 其证据
-  6. 开放性惊讶点
-- **禁止** (6 items):
+- **必须覆盖** (7 items — the paper's complete surface):
+  1. 逐节走一遍，按论文原序 —— **包括 appendix / supplementary /
+     supplementary tables / supplementary figures**。重点往往在附录。
+  2. 每条方程：**LaTeX 原样保留** + 变量含义（notation table 原样复现）
+     + 物理解读 + `[load-bearing]` / `[decorative]` 标签
+  3. 每张表：**原表格 row-by-row 复现**（不能只写 "showed improvement"）
+  4. 每张图：**caption 原文引用** + 轴 / 图例 / sub-figure labels / 所有
+     组件 + 与其他图表的 coordination
+  5. 每条显式 claim + 其证据（引用对应 §/Table/Fig 编号）
+  6. **参考文献（References）**：见下方 References 子规则
+  7. 开放性惊讶点 —— 不预判、不 rebut，只 flag
+
+- **保留原件 (Preserve-Verbatim rule)** —— 单独拎出来强调：
+  - 方程用 LaTeX 原样写（`$...$` / `$$...$$`），**不要用自然语言替代**
+    （"公式 3 说 X 等于 Y" 是 Stage 3 的简写，不是 Stage 2）
+  - 表格 row-by-row 用 markdown table 复现，**不要简写**（"论文给了
+    各 seq len 的结果" 不合格）
+  - 图表 caption 原文照抄并打 `> " ... "` quote marks
+  - **逻辑链** (the author's argument chain) 必须在 preread 中可追溯：
+    每条 claim 写出 `premise → conclusion → evidence (§/Table/Fig)` 的
+    原始形态，不要跳步
+  - **为什么这条规则存在**：Stage 3 WRITE 做抽象，靠的是 preread 里保留
+    的原始细节。抽象是单向有损操作；如果 preread 已经抽象了，Stage 3
+    会级联放大误差，或者到时候回头重读 paper（浪费时间）
+
+- **禁止** (7 items):
   1. 写 TL;DR / Q1/Q2/Q3 / 任何 Stage-3 的 7 节字段
-  2. 预选"重要图" —— 所有图都记，3–5 张的挑选在 Stage 3
-  3. 跳读 appendix / limitations / related work
+  2. 预选"重要图"—— 所有图都记，3–5 张的挑选在 Stage 3
+  3. 跳读 **appendix / supplementary / limitations / related work /
+     references**（references 尤其容易被忽略）
   4. 合并相邻 §（"反正同主题"）
   5. 重排 § 顺序（论文 §4 是实验就先写 §4，哪怕你觉得应该先 §5）
   6. 分类 / 取舍 / 综合（所有 taxonomic 操作留给 Stage 3）
+  7. 用自然语言替代原件（方程必须 LaTeX, 表格必须 row-by-row, caption
+     必须 verbatim）
 
 **Goal**: build complete paper context before any distillation decision
 is made. You are NOT allowed to start Stage 3 (the 7 sections) until
 READ is done and its exit criteria pass.
 
 The preread is an audit trail of what the authors actually wrote (in
-their order). Your job is to **restate + describe**, not to **categorize
-+ judge**. If you feel the urge to label something as "this is a
-constraint the paper introduces" or "this is the key insight" — stop.
-That's Stage 3 thinking.
+their order), with enough verbatim preservation that Stage 3 can do
+the abstracting WITHOUT going back to the paper. Your job is to
+**restate + describe + quote**, not to **categorize + judge + summarize
+away**. If you feel the urge to label something as "this is a constraint
+the paper introduces" or "this is the key insight" — stop. That's
+Stage 3 thinking.
 
-### File structure — one block per paper §
+### File structure — one block per paper §, plus References + Surprises
 
 ```markdown
 # {Title} — preread
 
 > Paper: {title}
 > Date read: {YYYY-MM-DD}
-> Paper sections: {N}
+> Paper sections: {N main body + M appendix/supplementary}
+> Total figures / tables / equations: {F figs, T tables, E eqs}
+> References count: {R entries}
 > Category (from Stage 1): {category}
 
 ---
@@ -212,8 +237,65 @@ That's Stage 3 thinking.
 ## §2 Related Work / Background
 ... (same 2-block pattern)
 
-... (continue for every numbered section the paper has, including
-appendices and supplementary material)
+... (continue for every numbered section the paper has)
+
+---
+
+## Appendix A / B / ... (if present)
+
+### A.1 / A.2 / ... (for each appendix subsection)
+
+#### 逐段复述
+...
+
+#### 章节小结
+...
+
+(Appendix sections get the SAME treatment as main-body sections. No
+shortcuts — appendix is often where proofs, extended tables, hyperparam
+grids, ablations, and dataset details live. For many papers these
+contain the most important details.)
+
+---
+
+## Supplementary material (if separate document / files)
+
+If the paper has a supplementary PDF, supplementary tables (Table S1,
+S2, ...), or supplementary figures (Fig S1, S2, ...) distributed as
+separate files — fetch and READ them. Give each supplementary section
+its own § block under this heading with the same two sub-blocks.
+
+---
+
+## References
+
+> 参考文献不是点缀。它是 paper 的 lineage map: 论文把自己 position
+> 在哪些前人工作上, 比哪些 baseline, 引用哪些技术, 回避哪些。这些决定
+> 了 Stage 4 synthesis 能否准确做跨篇关联。
+
+For each non-trivial reference (see rules below), record:
+
+- `[N] Author et al., year. Title. Venue.` (short form)
+- **Cited where**: §N / Table N / Fig N that cites it (can be multiple)
+- **Role**: one of `predecessor` (this paper builds on it) / `baseline`
+  (this paper compares against it) / `related-technique` (referenced
+  as an adjacent approach) / `tool` (used in the implementation, e.g.
+  the framework / library) / `motivation` (establishes the problem
+  this paper solves) / `hardware` (cited chip / system)
+
+Rules:
+- Capture **every citation that appears in §1 (motivation) and §2–3
+  (background / method)** — these are the ones the paper's argument
+  leans on.
+- For §6 Related Work: capture **all** cited papers (the whole taxonomy
+  the paper places itself into).
+- For §4 Experiments: capture all **baseline models / systems** and
+  their references.
+- For §5 Discussion: capture all cited hardware / systems / techniques.
+- Bibliography-only references (appear once in the reference list but
+  not cited in body) can be skipped with one-line noting their
+  existence.
+- If paper has ≤ 15 references total, capture all of them.
 
 ---
 
@@ -229,7 +311,7 @@ attack / open-question surfaces.}
 
 ## Exit criteria self-check
 
-... (6 checkbox list, see below)
+... (6 checkbox list + 1 preservation check, see below)
 ```
 
 ### The two required sub-blocks per paper § (details)
@@ -239,24 +321,62 @@ attack / open-question surfaces.}
 This is where every item from the "必须覆盖" list lands. One § block,
 all restatement content inline in paper order.
 
+**Text content**:
 - One bullet per paragraph (or per logical sub-paragraph for long ones),
   2–4 sentences each, in plain language, in the paper's order
-- Quote verbatim any sentence that is a headline claim, a formal
-  definition, or a surprising admission. Wrap quotes in `> " ... "`
-- **Every equation** that appears in this §:
-  - LaTeX reproduction
-  - Each variable's meaning (reproduce notation table if one exists)
-  - Physical / intuitive interpretation
-  - Tag: `[load-bearing]` (reused downstream) or `[decorative]`
-    (scene-setting only). Unsure → `[load-bearing]` by default; revisit
-    in Stage 3.
-- **Every table**, row-by-row: column semantics, best cell per column,
-  runner-up gap, any row that breaks the trend
-- **Every figure**, fully described: caption verbatim, components /
-  axes / legend, what it demonstrates, which other figs / tables /
-  equations it is coordinated with
+- **Quote verbatim** any sentence that is a headline claim, a formal
+  definition, a surprising admission, or an explicit motivation /
+  constraint statement. Wrap quotes in `> " ... "` — these anchor
+  Stage 3's §6 论证链 steps to the paper's own words.
 - **Every explicit claim** paired with the evidence the authors cite
-  (other §§, tables, figures, external references)
+  (other §§, tables, figures, external references). Format:
+  `paper claims X (§N para Y) — evidence: Fig.Z, Table K, cite [M]`
+
+**Every equation** (LaTeX preserved, not paraphrased):
+- Reproduce verbatim with `$$...$$` display math. Do NOT rewrite as
+  prose ("Equation 3 says throughput equals the min of two terms" is
+  Stage 3 shorthand, not Stage 2).
+- If paper has a notation table (Table of symbols), reproduce it as-is
+  in markdown table form under the relevant § (usually §Method /
+  §Model). Do not defer to "see Table N" — reproduce.
+- For each equation, attach three annotations:
+  - **Variables**: what each symbol means (copy from notation table if
+    one exists)
+  - **Physical interpretation**: what the equation "does" intuitively;
+    why `min` and not `sum`, why divide by $p$, why this exact form
+  - **Tag**: `[load-bearing]` (reused downstream in other equations or
+    in case-study derivation) vs `[decorative]` (scene-setting, not
+    referenced after). Unsure → `[load-bearing]` by default; revisit
+    in Stage 3.
+
+**Every table** (row-by-row preservation):
+- Reproduce the markdown table with **all rows and all columns**. "Paper
+  shows a comparison table" is insufficient; "Table 3 has 6 models ×
+  4 seq lengths" is insufficient. Rewrite the actual cells.
+- Below the table, note: column semantics, best cell per column, any
+  row that breaks the expected trend, cells the paper explicitly
+  highlights.
+
+**Every figure** (caption + all components):
+- Caption: `> " ... "` verbatim quote.
+- Components: axes (what they measure, units, scale log vs linear),
+  legend entries, line/bar colors and what they represent, annotations,
+  sub-figure labels (a)(b)(c) and what each sub-figure shows.
+- Cross-reference: which other figs / tables / equations are
+  coordinated with this one (e.g. "Fig.5(b) plots the RHS curves of
+  Eq.7 at $N_p = 3, N_d = 5$").
+- Downloaded image path (from Stage 1 Phase 1.4 extraction):
+  `../images/{paper-id}/figN-{name}.png`. If image couldn't be
+  extracted, note explicitly.
+
+**Logic chain preservation**:
+- For each § 章节小结 that summarizes "what the reader carries forward",
+  trace the **linkage backward to previous § and forward to next §**.
+  Example: "§2.1 established the bandwidth wall. §2.2 shows hybrid
+  attention reduces this wall by 4–13×, which §2.3 uses to argue
+  cross-DC PD becomes feasible, which §3 uses to design PrfaaS."
+- This preserves the paper's argument chain in its native form, so
+  Stage 3's §6 论证链 can point at the exact steps the paper intended.
 
 Do NOT categorize or judge content. If the paper says "we cannot do X
 because Y" — reproduce the sentence, note the evidence. Do not create
@@ -296,7 +416,9 @@ deep-llm.md will remind you to capture every `config.json` field, every
 per-module parameter count, every KV cache size statement. Go back and
 add missing details to the relevant paper § block.
 
-### Exit criteria (6 checkboxes from memory)
+### Exit criteria
+
+**Part A — 6 from-memory checkboxes** (test your understanding):
 
 Without re-opening the paper, you should be able to:
 
@@ -312,10 +434,25 @@ Without re-opening the paper, you should be able to:
       to a baseline (every paper has these; if you can't find any,
       you missed them)
 
+**Part B — preservation / completeness checks** (grep your preread):
+
+- [ ] **Every paper § in the main body has a block** — including §1, §2,
+      §3, ..., conclusion. No skips.
+- [ ] **Every appendix / supplementary subsection has a block** (if
+      paper has any). Empty appendix OK if paper truly has none.
+- [ ] **LaTeX coverage**: count `$$` display-math blocks in preread ≥
+      count of numbered equations in the paper (Eq.1, Eq.2, ...).
+- [ ] **Table coverage**: count markdown tables (`|...|`) in preread ≥
+      count of Table N in the paper.
+- [ ] **Figure coverage**: every `Figure N` caption in the paper has a
+      corresponding `> "..."` verbatim caption quote in preread.
+- [ ] **References block populated**: top references from §1/§2/§3/§6
+      captured with role tag (not just [N] AuthorName).
+
 If any checkbox fails → re-read the relevant § and extend the preread.
-Partial understanding at this stage produces the classic PrfaaS failure
-(author证明 reduced to "Eq.X 给出..." hand-wave because reader didn't
-see the model → case-study mapping).
+Partial understanding or premature abstraction at this stage produces
+the classic PrfaaS failure (作者证明 reduced to "Eq.X 给出..." hand-wave
+because the reader didn't see the model → case-study mapping).
 
 ---
 
