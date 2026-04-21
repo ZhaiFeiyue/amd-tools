@@ -1,9 +1,31 @@
 # diagram-tool-choice.md — Mermaid / drawio / SVG decision guide
 
-Mermaid is the default. Use drawio only for multi-page ladders or precise
-geometry. Use SVG only for hero figures.
+## Priority 0 — paper's own figure first
 
-## Decision matrix
+**Before choosing a tool**, check whether the paper already has a
+figure for what you want to show:
+
+- Paper has a clear figure → **embed the extracted PNG directly**, do
+  NOT redraw. Format:
+  ```markdown
+  ![Figure N: caption](../images/{paper-id}/figN-{name}.png)
+  ```
+- Paper's figure is unclear / too abstract / needs extra annotation →
+  redraw using the matrix below **AND** state the reason inline (e.g.
+  "重画以合并两个视图", "paper 原图分辨率不足", "增加 $t$ 阈值的标注")
+- Paper has NO figure for this concept → use the matrix below freely
+
+The redraw is a supplement, not a replacement. When redrawing, keep the
+paper's figure nearby as "原图" reference (embed above the redraw or
+link in caption).
+
+**Don't redraw just to "use Mermaid"** — duplicated effort, and the
+paper's own figure is authoritative source.
+
+## Decision matrix (used when redrawing is justified)
+
+When the paper has no figure, or you've decided a redraw is warranted
+per the Priority 0 rule above, pick a tool:
 
 | Scenario | Use |
 |---|---|

@@ -539,7 +539,7 @@ and carry it into Stage 4 rather than inlining it into notes.
 |---|---|---|---|
 | 1 | **TL;DR** | 3 sentences, include core numbers / algorithm idea / project scope | ≤ 300 chars |
 | 2 | **Q1 / Q2 / Q3** | Q1 痛点, Q2 方法, Q3 结果 + baseline numbers | each ≤ 3 sentences, must progress |
-| 3 | **架构 / 方法图** | Mermaid first; drawio only for multi-page ladder or chip floorplan; SVG only for hero figure | ≥ 1 diagram |
+| 3 | **架构 / 方法图** | **Paper's own figure first** — embed the extracted PNG from `images/{id}/`. Redraw with Mermaid / drawio / SVG only when (a) paper has no such diagram, (b) paper's figure is too abstract / too noisy for the notes' discussion, or (c) you need to annotate / re-organize beyond what the paper's caption provides. Do NOT redraw just to "use Mermaid" — that's duplicated effort. | ≥ 1 diagram (paper or redrawn), with justification for any redraw |
 | 4 | **作者证明** | Notation table + each equation's physical meaning + monotonicity/convexity + first-order mapping from model → case-study numbers. If paper has no formal model, mark `**无形式化作者证明 — 仅实证**`. | 6 checks, see below |
 | 5 | **实验与数据** | 3–5 key figures/tables embedded **next to the text that discusses them** (not in a separate gallery section) | bold best per column in tables |
 | 6 | **论证链 (paper-internal)** | ≥3-step table (step / premise + citation / conclusion / evidence) with load-bearing markers. **Pure reconstruction of the paper's own argument** — no attacks, no rebuttals, no ecosystem checks here (those are Stage 4). | ≥3 steps, not dichotomy |
@@ -627,6 +627,25 @@ deep-*.md files are now additive, not replacement templates.
 or §7 code walk.
 
 ### Diagram tool choice
+
+**Priority 0 — paper's own figure first**. Every section you're about
+to draw a diagram for, first ask:
+- Does the paper already have a figure for this? (check preread's
+  figure catalog)
+- If yes, is it clear enough to drop in with its caption?
+  - Yes → embed the extracted PNG directly:
+    `![Figure N: ...](../images/{id}/figN-{name}.png)`
+  - No / needs annotation / re-organization → redraw with the tool
+    matrix below, and **state the reason** inline (e.g. "Figure 3
+    重画以合并 scheduler + KVCache manager 在同一视图").
+- If the paper has NO such figure → use the tool matrix below.
+
+When you redraw, **keep the paper's figure nearby as the ground truth**
+(either embed it as "原图" above the redraw, or link to it in the
+caption). The redraw is a supplement, not a replacement.
+
+**Tool matrix** (used when (a) paper has no figure, or (b) you've
+explicitly decided a redraw is warranted):
 
 | Scenario | Preferred | Fallback |
 |---|---|---|
