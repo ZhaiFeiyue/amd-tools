@@ -316,83 +316,122 @@ attack / open-question surfaces.}
 
 ### The two required sub-blocks per paper § (details)
 
-**1. 逐段复述 (paragraph-by-paragraph restatement)**
+**1. 逐段复述 (faithful restatement) — answers WHAT the paper says**
 
-This is where every item from the "必须覆盖" list lands. One § block,
-all restatement content inline in paper order.
+逐段复述 is best thought of as a **highlighted + lightly-annotated copy
+of the paper**, not a summary of it. Default to verbatim quoting; your
+own words are allowed only as connective scaffolding.
 
-**Text content**:
-- One bullet per paragraph (or per logical sub-paragraph for long ones),
-  2–4 sentences each, in plain language, in the paper's order
-- **Quote verbatim** any sentence that is a headline claim, a formal
-  definition, a surprising admission, or an explicit motivation /
-  constraint statement. Wrap quotes in `> " ... "` — these anchor
-  Stage 3's §6 论证链 steps to the paper's own words.
-- **Every explicit claim** paired with the evidence the authors cite
-  (other §§, tables, figures, external references). Format:
-  `paper claims X (§N para Y) — evidence: Fig.Z, Table K, cite [M]`
+**Decision rule for each paragraph** (apply to every paper paragraph):
 
-**Every equation** (LaTeX preserved, not paraphrased):
-- Reproduce verbatim with `$$...$$` display math. Do NOT rewrite as
-  prose ("Equation 3 says throughput equals the min of two terms" is
-  Stage 3 shorthand, not Stage 2).
-- If paper has a notation table (Table of symbols), reproduce it as-is
-  in markdown table form under the relevant § (usually §Method /
-  §Model). Do not defer to "see Table N" — reproduce.
-- For each equation, attach three annotations:
-  - **Variables**: what each symbol means (copy from notation table if
-    one exists)
-  - **Physical interpretation**: what the equation "does" intuitively;
-    why `min` and not `sum`, why divide by $p$, why this exact form
-  - **Tag**: `[load-bearing]` (reused downstream in other equations or
-    in case-study derivation) vs `[decorative]` (scene-setting, not
-    referenced after). Unsure → `[load-bearing]` by default; revisit
-    in Stage 3.
+- **Load-bearing content** → **verbatim quote**, wrapped `> "..."`.
+  Includes every sentence that states: a claim, a definition, a
+  motivation, a trade-off, a constraint ("we cannot do X because Y"),
+  a design choice, a result, a limitation, a surprising number.
+- **Connective tissue** → your own 1-sentence compression is OK.
+  Includes: transitional phrases ("As described above"), boilerplate
+  repeats of definitions, re-stated background from earlier §§.
+- **When in doubt → quote**. Over-quoting preserves value; under-quoting
+  loses it forever (Stage 3 will need to re-read the paper).
 
-**Every table** (row-by-row preservation):
-- Reproduce the markdown table with **all rows and all columns**. "Paper
-  shows a comparison table" is insufficient; "Table 3 has 6 models ×
-  4 seq lengths" is insufficient. Rewrite the actual cells.
-- Below the table, note: column semantics, best cell per column, any
-  row that breaks the expected trend, cells the paper explicitly
-  highlights.
+**What NOT to do** (hallmarks of premature abstraction):
 
-**Every figure** (caption + all components):
-- Caption: `> " ... "` verbatim quote.
-- Components: axes (what they measure, units, scale log vs linear),
-  legend entries, line/bar colors and what they represent, annotations,
-  sub-figure labels (a)(b)(c) and what each sub-figure shows.
-- Cross-reference: which other figs / tables / equations are
-  coordinated with this one (e.g. "Fig.5(b) plots the RHS curves of
-  Eq.7 at $N_p = 3, N_d = 5$").
-- Downloaded image path (from Stage 1 Phase 1.4 extraction):
-  `../images/{paper-id}/figN-{name}.png`. If image couldn't be
-  extracted, note explicitly.
+- ❌ Interpretive paragraph headers: `- Para 1 — Why PD disaggregation
+  exists: ...` — the "Why PD disaggregation exists" is YOUR framing,
+  not the paper's. Use neutral scaffolding: `- §1 Para 1:` with
+  verbatim content below.
+- ❌ Paraphrasing load-bearing sentences: "Paper argues that PD
+  disaggregation keeps prefill and decode bound to the same RDMA
+  fabric" — compressing "tightly coupled, high-bandwidth network
+  domain, typically a single datacenter-scale RDMA fabric" into "RDMA
+  fabric" loses the paper's specific phrasing. Quote it instead.
+- ❌ Merging multiple paragraph content into one bullet: "Para 1-3 set
+  up the bandwidth wall" — even if they're thematically related, each
+  paragraph gets its own bullet with its own verbatim content.
+- ❌ Saying "Paper gives Eq.N" without reproducing the equation.
 
-**Logic chain preservation**:
-- For each § 章节小结 that summarizes "what the reader carries forward",
-  trace the **linkage backward to previous § and forward to next §**.
-  Example: "§2.1 established the bandwidth wall. §2.2 shows hybrid
-  attention reduces this wall by 4–13×, which §2.3 uses to argue
-  cross-DC PD becomes feasible, which §3 uses to design PrfaaS."
-- This preserves the paper's argument chain in its native form, so
-  Stage 3's §6 论证链 can point at the exact steps the paper intended.
+**Structured elements — always verbatim, always in place**:
+
+- **Every equation**: LaTeX with `$$...$$` display math, NEVER prose.
+  Attach three annotations:
+  - **Variables**: what each symbol means (reproduce notation table
+    verbatim if one exists; never "see Table N")
+  - **Physical interpretation**: why `min` not `sum`, why divide by
+    $p$, why this exact form
+  - **Tag**: `[load-bearing]` (reused downstream) vs `[decorative]`
+    (scene-setting). Unsure → `[load-bearing]` by default.
+
+- **Every table**: reproduce as markdown table, **all rows and
+  columns**, actual cells. "Paper shows a comparison" is insufficient.
+  Below the table: column semantics, best cell per column, rows that
+  break the trend.
+
+- **Every figure**: `> "..."` verbatim caption + axes (units, scale)
+  + legend entries + sub-figure labels (a)(b)(c) with what each shows
+  + cross-refs to coordinated figs/tables/equations. Include
+  `../images/{id}/figN-{name}.png` path.
+
+**Every explicit claim** paired with its evidence pointer:
+`paper claims X (§N para Y) — evidence: Fig.Z, Table K, cite [M]`.
+The claim text itself should usually be verbatim; the evidence
+pointer is your addition.
+
+**Logic chain preservation**: inside 逐段复述, follow the paper's
+own order of argument. Don't reorder, don't pre-abstract. The paper's
+"A implies B because of C" stays as "A implies B because of C" in
+the paper's order. Stage 3's §6 论证链 will reconstruct the chain
+as a table using the 逐段复述 content as source.
 
 Do NOT categorize or judge content. If the paper says "we cannot do X
-because Y" — reproduce the sentence, note the evidence. Do not create
-a separate "constraint" bucket; that is Stage 3's taxonomy task.
+because Y" — reproduce the sentence verbatim. Do not create a separate
+"constraint" bucket; that is Stage 3's taxonomy task.
 
-**2. 章节小结 (section summary)**
+**2. 章节小结 (section role) — answers WHAT ROLE this § plays, not WHAT it says**
 
-2–4 sentences answering:
-- What role does this § play in the paper's overall narrative?
-  (motivation / background / method-core / model / experiments /
-  ablation / discussion / limitation / appendix-detail)
-- What does the reader now know that they didn't before this §?
-- What must the reader carry forward to understand subsequent §§?
+**Critical distinction** (most common failure mode of preread):
 
-Content-only. Do NOT yet judge whether the § is "important" or
-"skippable" — that's Stage 3.
+- 逐段复述 answers: "What does the paper SAY in this §?" — content
+- 章节小结 answers: "What ROLE does this § play in the paper's arc?" —
+  structure
+
+If a bullet in 章节小结 could be dropped into 逐段复述 without looking
+out of place, you've written content in the wrong block. If a bullet in
+逐段复述 could be dropped into 章节小结, it means 逐段复述 isn't
+quote-heavy enough.
+
+**Format** (hard cap 3 items, each 1 sentence):
+
+1. **Role of this §** — pick from: motivation / background / method-core
+   / analytical-model / experiment-setup / experiment-results /
+   ablation / discussion / limitation / related-work / appendix-detail.
+   Add a qualifier if useful ("background establishing the bandwidth
+   problem", "method-core introducing the routing policy").
+2. **Backward link** — what prior § does this build on, and what does
+   it require from that prior §?
+3. **Forward link** — what does this § hand off to the next §, and
+   which claim / construct will be used there?
+
+**What NOT to write** in 章节小结:
+
+- ❌ "This § establishes that hybrid attention reduces KV throughput
+  by 4–13×" — that's a CONTENT claim. It belongs in 逐段复述.
+- ❌ "The paper shows that..." followed by the specific result — that's
+  content.
+- ❌ Bullet-list of claims (a)(b)(c) — that's a content summary.
+- ❌ Numbers, equations, baseline names — all content, not role.
+
+**What TO write** in 章节小结 (example, good):
+
+> §2.1 is background that establishes the bandwidth-wall problem. It
+> builds on §1's motivation by supplying quantitative evidence (the
+> single dense-model number Fig.2 uses). It hands off to §2.2 the
+> "bandwidth-wall exists" premise, which §2.2 then attacks via
+> architectural reduction.
+
+**Self-check**: if the paper reordered §2.1 and §2.2 (put §2.2 first),
+逐段复述 of §2.1 would stay identical but 章节小结 of §2.1 would
+change (backward/forward links differ). That's the invariant that
+separates content from role.
 
 ### Final top-level section: 全篇开放性惊讶点
 
@@ -714,7 +753,8 @@ retroactively update it.
    corresponding stage was skipped, a process failure even if the final
    HTML looks OK. Once the checker is updated, it will enforce:
    (a) preread's top-level § count matches paper's actual § count (±1),
-   (b) every preread § block has non-empty 逐段复述 / 章节小结 / 核心约束,
+   (b) every preread § block has non-empty 逐段复述 and 章节小结;
+       章节小结 must not repeat 逐段复述 content (role-only check),
    (c) notes has 7 sections and none of them contain adversarial /
    ecosystem / paradigm-shift content (those belong in synthesis),
    (d) synthesis has ≥1 cited related paper OR explicit "first entry".
