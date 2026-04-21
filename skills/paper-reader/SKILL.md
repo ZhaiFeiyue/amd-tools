@@ -537,7 +537,7 @@ and carry it into Stage 4 rather than inlining it into notes.
 
 | # | Section | Contents | Hard minimum |
 |---|---|---|---|
-| 1 | **TL;DR** | 3 sentences, include core numbers / algorithm idea / project scope | ≤ 300 chars |
+| 1 | **TL;DR** | Brief skimming blurb — include core numbers / algorithm idea / project scope as appropriate to paper type; sentence count is up to the writer, favor clarity over compression | ≤ 300 chars |
 | 2 | **Q1 / Q2 / Q3** | Q1 痛点, Q2 方法, Q3 结果 + baseline numbers | each ≤ 3 sentences, must progress |
 | 3 | **架构 / 方法图** | **Paper's own figure first** — embed the extracted PNG from `images/{id}/`. Redraw with Mermaid / drawio / SVG only when (a) paper has no such diagram, (b) paper's figure is too abstract / too noisy for the notes' discussion, or (c) you need to annotate / re-organize beyond what the paper's caption provides. Do NOT redraw just to "use Mermaid" — that's duplicated effort. | ≥ 1 diagram (paper or redrawn), with justification for any redraw |
 | 4 | **作者证明** | Notation table + each equation's physical meaning + monotonicity/convexity + first-order mapping from model → case-study numbers. If paper has no formal model, mark `**无形式化作者证明 — 仅实证**`. | 6 checks, see below |
