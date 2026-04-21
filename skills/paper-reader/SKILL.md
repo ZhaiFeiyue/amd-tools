@@ -898,7 +898,7 @@ Every match is a blocker; delete or rewrite before save.
 | 4 | Trigger / classification meta-block | "📌 **触发说明**: 本 paper 归类 framework 但属于 hardware-proximal 子集..." | Delete; classification info lives in papers.json, not notes |
 | 5 | Tool-choice rationale in notes | "本笔记 2026-04-21 改用 Mermaid 因为...", "Mermaid 的优势..." | Delete; tool rationale lives in `diagram-tool-choice.md` |
 | 6 | deep-*.md principle restatement | "图里有的不写字，字里有的不贴码", "文字说明 = 架构图的 caption" | Delete; those are skill principles, not paper content |
-| 7 | Self-referential format description | "本节只写 X 不讨论 Y", "本笔记 deep read 采用 Z 结构" | Delete the meta; let structure speak for itself |
+| 7 | Self-referential format description | "本节只写 X 不讨论 Y"; "本笔记 deep read 采用 Z 结构"; **"Scope of this file: paper-internal content only. Cross-paper analysis lives in knowledge/synthesis-{id}.md"** (PrfaaS v3 real leak); "Stage 3 v2 (post-preread-v2)"; "v0.3 skill applies here" | Delete the meta; let structure speak for itself. If you feel the urge to orient the reader about what's in this file vs elsewhere, that's the signal — you are writing for the skill-aware reader, not the paper reader |
 | 8 | Skill-rule acronym naturally echoed from the skill | `(SJM)`, `(Phase 2b)`, `(hybrid disambiguation — Phase 3 Step 4)` | Drop parenthetical; if the concept needs naming, use a content-level name |
 
 **Step 3 — Completeness checker scan (belt-and-suspenders)**:
@@ -911,6 +911,44 @@ If it flags anything, loop back to Step 1 on the flagged content.
 **Why this exists**: post-hoc scanner alone = whack-a-mole; self-check
 at generation time catches issues at root. See `incidents.md`
 2026-04-21I for the original incident that motivated the 8-pattern list.
+
+### Stage 3 exit gate — HARD BLOCKER (2026-04-21J)
+
+**Before declaring Stage 3 complete and moving to Stage 4**, you MUST
+run the leak scanner and it MUST exit 0:
+
+```bash
+python3 ~/.cursor/paper-db/tools/check_paper_completeness.py {paper_id} --check=leaks
+```
+
+- `--check=leaks` runs ONLY the skill-leakage scan (schema-agnostic,
+  works on v0.3 7-section notes regardless of other schema drift).
+- Any `❌` failures = **skill content leaked into notes**. Fix them
+  at source (edit notes/{id}.md) and re-run until exit 0.
+- Do NOT proceed to Stage 4 CONNECT or Stage 5 PUBLISH with a failing
+  leak scan. The scanner is authoritative; your own "looks fine to me"
+  self-check is NOT sufficient (documented failure mode — agent
+  authoring bias).
+
+**Why this is a separate gate at end of Stage 3 (not just the final
+gate at Stage 5)**: by Stage 5 the MD is already in `notes/`, sync.sh
+has already run, HTML has been written, paper page has been committed.
+Catching leaks there means re-doing rendering + re-committing. Catching
+at Stage 3 end is free — edit the MD and re-run.
+
+**Why this is NOT just instruction-layer (Pre-Save Self-Check above)**:
+real-world empirical: same LLM that authored the notes has contextual
+bias — it sees the leak-style content as "useful orientation" (e.g.
+"Scope of this file: paper-internal content only") rather than
+recognizing it as pattern 7. Scanner catches what self-check missed.
+See PrfaaS v3 incident (2026-04-21J): self-check passed, scanner
+caught 3 leak phrases.
+
+**Failure recovery**: if scanner flags a phrase you believe is
+legitimate (rare), add it to `check_paper_completeness.py`'s
+`_SKILL_LEAK_PHRASES` whitelist via explicit exclusion rather than
+manual override. False-positives should be eliminated at the scanner
+level, not at the per-paper level.
 
 ---
 
