@@ -10,16 +10,26 @@ description: >-
   category is automatically "code" and deep-code.md guide is used.
 ---
 
-# AI Infra Paper Reader (slim v0.2)
+# AI Infra Paper Reader (slim v0.2.1)
 
-Three stages. Nine notes sections. One HTML. No silent skips.
+Four stages. Nine notes sections. One HTML. No silent skips.
 
 ```
-ABSORB  →  EXPRESS  →  PUBLISH
-fetch      write the       sync + commit
-classify   9-section       + completeness
-extract    notes           gate
+ABSORB  →  READ  →  WRITE  →  PUBLISH
+fetch      full      9-section    sync + commit
+classify   scratch   notes        + completeness
+extract    notes     (from        gate
+figures    (no       scratch,
+           cuts)     pick &
+                     distill)
 ```
+
+**The READ-before-WRITE discipline** is the single most important change
+in v0.2.1: LLMs cannot decide "what's important" while reading; that
+decision needs to be made from a position of full paper context.
+Forcing structured output during reading produces selective skimming,
+missed cross-references, and downgraded details. The scratch notes from
+Stage 2 are the raw material; Stage 3 picks and distills from them.
 
 **Before every paper read**: skim `~/.cursor/paper-db/incidents.md` for past
 failure modes. Every rationale / postmortem / historical "why" lives there.
@@ -106,11 +116,108 @@ arXiv with HTML).
 
 ---
 
-## Stage 2 — EXPRESS
+## Stage 2 — READ (exhaustive read-through, NO structured output yet)
 
-Write a single notes file at `~/.cursor/paper-db/notes/{paper-id}.md`
-with the following **9 mandatory sections**. Same structure for every
-category. Category-specific extensions go in `deep-<category>.md`.
+**Goal**: build complete paper context before any distillation decision
+is made. You are NOT allowed to start Stage 3 (the 9 sections) until
+READ is done and its exit criteria pass.
+
+**Output**: `~/.cursor/paper-db/notes-scratch/{paper-id}.md` — a
+free-form long-form dump. No section template, no length cap, no
+aesthetics. Just thorough. The scratch is an audit trail, not a
+deliverable to the user — but it must exist on disk.
+
+### What the scratch must contain
+
+1. **Section-by-section walk** (in the author's order). For each paper
+   §N, write 3–8 sentences summarizing what it says in plain language,
+   plus any quote you want to preserve verbatim.
+2. **Every equation, reproduced**. Copy it, state what each variable
+   means, state the physical interpretation, state what follows from
+   it. Tag each equation as either **load-bearing** (used in downstream
+   reasoning or case-study derivation) or **decorative** (scene-setting
+   only). Unsure → tag as load-bearing and revisit.
+3. **Every table, row by row**. For each: column semantics, the best
+   cell per column, runner-up gap, which row breaks the trend, is the
+   baseline fairly configured.
+4. **Every figure, fully described**. Caption, components, what it
+   shows, how it supports the surrounding text, which other figures or
+   tables it is coordinated with (a result in Fig.7 often re-cites
+   Table 3 — note both sides).
+5. **Every explicit claim with its evidence**. "Authors claim X (§N
+   para Y); evidence cited: Fig.Z + Table K + the number A from §M."
+6. **Open surprises**. Anything you didn't expect, anything that
+   contradicts your priors, anything asserted without obvious proof.
+   These become §6 论证链 attack candidates later.
+
+### Rules during READ (what NOT to do)
+
+- **Do NOT** write TL;DR, Q1/Q2/Q3, Core Contribution, or any of the 9
+  sections yet. If you feel the urge, tell yourself "that decision
+  needs Stage 3 context, not enough information yet."
+- **Do NOT** pre-select "important" figures / tables / equations. All
+  of them go into the scratch; the 3–5 picks happen in Stage 3.
+- **Do NOT** make hybrid-disambiguation, category, or code cross-reference
+  decisions yet. The classification was already done in Stage 1 from the
+  abstract/title; if READ reveals the classification was wrong, flag it
+  and re-run Stage 1.2 before entering Stage 3.
+- **Do NOT** skim sections you judge "less relevant". Appendices,
+  limitations, related work, and ablations are where the load-bearing
+  details hide. If a section truly adds nothing, write one sentence
+  saying so; don't silently skip.
+
+### Category-specific READ hints
+
+After the section-by-section walk is complete, open the matching
+`deep-<category>.md` and scan its § headings to check whether there's a
+detail you should have captured but missed. The deep-*.md guides are
+**READ-time checklists** as much as WRITE-time templates. Example:
+deep-llm.md will remind you to capture every `config.json` field, every
+per-module parameter count, every KV cache size statement.
+
+### Exit criteria (must pass before Stage 3)
+
+Without re-opening the paper, you should be able to:
+
+- [ ] Recall the 3–5 headline numbers (% improvement, throughput, token
+      counts, param counts) from memory
+- [ ] Sketch the paper's architecture / method diagram from memory
+- [ ] Recite the 3 biggest claims in one sentence each
+- [ ] Name which § contains the paper's formal model / theorem /
+      proposition / cost model (or confidently state "no formal model")
+- [ ] Point to which experiment configuration is the "case study" the
+      model's prediction should match
+- [ ] Name ≥2 rows in the main results table where the paper **loses**
+      to a baseline (every paper has these; if you can't find any,
+      you missed them)
+
+If any checkbox fails → re-read the relevant part. Partial understanding
+at this stage produces the classic PrfaaS failure (author证明 reduced
+to "Eq.X 给出..." hand-wave because reader didn't see the model →
+case-study mapping).
+
+---
+
+## Stage 3 — WRITE (distill scratch into the 9 sections)
+
+Now read your `notes-scratch/{id}.md` back and produce the real
+`~/.cursor/paper-db/notes/{paper-id}.md` with the following **9
+mandatory sections**. Category-specific extensions go in
+`deep-<category>.md`.
+
+**Discipline**: Stage 3 is where you DELETE, PROMOTE, and STRUCTURE —
+in that order. From the scratch:
+- **Delete** content that's redundant, tangential, or pure background
+- **Promote** the 3–5 most important figures into §5, the load-bearing
+  equations into §4, the ≥3-step chain into §6, the binding-worthy
+  claims into §8 — the scratch had them all; here you pick
+- **Structure** into the 9 sections below
+
+If a 9-section field would be empty because the scratch doesn't have
+the raw material → the READ was incomplete, not the paper. Go back to
+Stage 2 and capture the missing detail, rather than writing `[论文未
+披露]` prematurely. `[论文未披露]` is reserved for things the paper
+genuinely does not disclose, verified via Stage 2 coverage.
 
 ### The 9 sections
 
@@ -232,7 +339,7 @@ prose. Delete all matches before file write.
 
 ---
 
-## Stage 3 — PUBLISH
+## Stage 4 — PUBLISH
 
 1. **Incremental synthesis** — read `~/.cursor/skills/paper-synthesis/SKILL.md`
    and run its "Incremental Update" procedure. Updates `related_paper_ids`
@@ -265,10 +372,14 @@ prose. Delete all matches before file write.
 
 5. **Final completeness gate** —
    ```bash
+   ls ~/.cursor/paper-db/notes-scratch/{id}.md  # scratch must exist
    python3 ~/.cursor/paper-db/tools/check_paper_completeness.py {id} --strict
    ```
-   If exit code ≠ 0, fix every blocker before presenting the Final Output
-   to the user. No exceptions.
+   Scratch presence is a soft signal — not yet enforced by the checker,
+   but its absence means Stage 2 was skipped, which is a process
+   failure even if Stage 3 output looks OK.
+   If `check_paper_completeness.py` exits ≠ 0, fix every blocker before
+   presenting the Final Output to the user. No exceptions.
 
 ---
 
