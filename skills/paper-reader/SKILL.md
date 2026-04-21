@@ -511,9 +511,6 @@ in that order. From the preread:
 - **Promote** the 3–5 most important figures into §5, the load-bearing
   equations (tagged in preread) into §4, the ≥3-step chain into §6
   — the preread had them all; here you pick
-- **Aggregate 核心约束**: the preread has constraints scattered across
-  every paper §. In Stage 3 you consolidate them into §6's argument
-  chain (one constraint → one step)
 - **Structure** into the 7 sections below
 
 If a section field would be empty because the preread doesn't have the
@@ -559,9 +556,13 @@ and carry it into Stage 4 rather than inlining it into notes.
    reported numbers are derivable — NOT sweep-fit
 5. Pure-model defense: "assume no case study, how would you convince a
    reader the method works?" — 1-sentence version
-6. Attack surface: what simplifications did the model make (Jensen?
-   stationary distribution? closed-form assumption?) and when would they
-   break the predictions?
+6. Simplifying assumptions (paper self-stated): what simplifications did
+   the model make (Jensen? stationary distribution? closed-form
+   assumption? representative-length approximation?) and when would they
+   break the predictions? These are the paper's own acknowledged
+   tractability moves, NOT reader-side adversarial attacks (which live
+   in Stage 4 synthesis §3a). Quote the paper's own wording where
+   available.
 
 If the paper genuinely has no formal model, write `**无形式化作者证明 —
 仅实证**` and state which aspects would have been model-verified if one
@@ -591,9 +592,9 @@ Stage 4 you can point to specific steps as attack targets.
 
 ### Category-specific extensions
 
-After writing the 9 base sections, read the matching `deep-<category>.md`
+After writing the 7 base sections, read the matching `deep-<category>.md`
 and add **only the category-specific content** it prescribes (typically
-3–5 extra points). The 9 base sections cover the universal scaffold;
+3–5 extra points). The 7 base sections cover the universal scaffold;
 deep-*.md files are now additive, not replacement templates.
 
 | Category | Guide |
