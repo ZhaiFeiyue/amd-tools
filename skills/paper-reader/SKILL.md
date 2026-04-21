@@ -15,19 +15,36 @@ description: >-
 Four stages. Nine notes sections. One HTML. No silent skips.
 
 ```
-ABSORB  →  READ  →  WRITE  →  PUBLISH
-fetch      preread   9-section    sync + commit
-classify   per §     notes        + completeness
-extract    逐段 +     (distill     gate
-figures    小结 +     from
-           约束       preread)
+ABSORB  →  READ  →  WRITE  →  CONNECT  →  PUBLISH
+fetch      preread   7-section    cross-paper    sync + commit
+classify   per §     notes        synthesis      + completeness
+extract    逐段+小结+  (paper-     (related +      gate
+figures    核心约束   internal    delta + 可攻击+
+                     only)       生态位, via
+                                 paper-synthesis)
 ```
 
-**The READ-before-WRITE discipline** is the single most important change
-in v0.2: LLMs cannot decide "what's important" while reading; that
-decision needs to be made from a position of full paper context.
-Forcing structured output during reading produces selective skimming,
-missed cross-references, and downgraded details.
+**Skill separation of concerns**:
+
+- **`paper-reader`** (this skill) owns Stages 1, 2, 3, 5 — everything
+  that can be produced by reading ONE paper in isolation. Notes from
+  Stage 3 are pure single-paper content.
+- **`paper-synthesis`** (sibling skill) owns Stage 4 CONNECT — the
+  high-level thinking and cross-paper analysis that REQUIRES the notes
+  library to produce. Output: `knowledge/synthesis-{id}.md`.
+
+The rules that live in `paper-synthesis` (moved out of this skill in
+v0.3): adversarial rebuttal, ecosystem reality check, paradigm-shift
+positioning, design-binding critique (with cross-paper grounding),
+trade-off axis + unexplored hybrid, 根本性 vs 缓解性 审视, this paper
+vs other papers' delta. These CANNOT be written well from just one
+paper — they need the library.
+
+**The READ-before-WRITE discipline** is the single most important
+architectural rule: LLMs cannot decide "what's important" while reading;
+that decision needs full paper context. Forcing structured output during
+reading produces selective skimming, missed cross-references, downgraded
+details.
 
 The **preread** (Stage 2 output) is structured per-paper-§, in the
 authors' original order. Each § block contains three mandatory
@@ -35,7 +52,8 @@ sub-blocks: 逐段复述 (paragraph restatement) + 章节小结 (section
 summary) + 核心约束 (design-space constraints introduced in this §).
 This prevents the agent from silently re-ordering, selectively reading,
 or skipping "less relevant" sections. The preread is the raw material;
-Stage 3 WRITE picks and distills from it.
+Stage 3 WRITE picks and distills from it; Stage 4 CONNECT then
+cross-references with the note library.
 
 **Before every paper read**: skim `~/.cursor/paper-db/incidents.md` for past
 failure modes. Every rationale / postmortem / historical "why" lives there.
@@ -125,7 +143,7 @@ arXiv with HTML).
 ## Stage 2 — READ (section-by-section, anchored to paper's own structure)
 
 **Goal**: build complete paper context before any distillation decision
-is made. You are NOT allowed to start Stage 3 (the 9 sections) until
+is made. You are NOT allowed to start Stage 3 (the 7 sections) until
 READ is done and its exit criteria pass.
 
 **Output**: `~/.cursor/paper-db/preread/{paper-id}.md` — a long-form
@@ -312,32 +330,48 @@ see the model → case-study mapping).
 
 ---
 
-## Stage 3 — WRITE (distill preread into the 9 sections)
+## Stage 3 — WRITE (distill preread into the 7-section paper-internal notes)
 
 Now read your `preread/{id}.md` back and produce the real
-`~/.cursor/paper-db/notes/{paper-id}.md` with the following **9
-mandatory sections**. Category-specific extensions go in
-`deep-<category>.md`.
+`~/.cursor/paper-db/notes/{paper-id}.md` with the following **7
+mandatory sections**. **Paper-internal content only** — cross-paper
+connections, high-level thinking, and attacks on the paper's argument
+are Stage 4's job and go in a separate file.
+
+Category-specific extensions go in `deep-<category>.md`.
 
 **Discipline**: Stage 3 is where you DELETE, PROMOTE, and STRUCTURE —
 in that order. From the preread:
 - **Delete** content that's redundant, tangential, or pure background
 - **Promote** the 3–5 most important figures into §5, the load-bearing
-  equations (tagged in preread) into §4, the ≥3-step chain into §6,
-  the binding-worthy claims into §8 — the preread had them all; here
-  you pick
+  equations (tagged in preread) into §4, the ≥3-step chain into §6
+  — the preread had them all; here you pick
 - **Aggregate 核心约束**: the preread has constraints scattered across
   every paper §. In Stage 3 you consolidate them into §6's argument
-  chain (one constraint → one step) and §8's binding analysis
-- **Structure** into the 9 sections below
+  chain (one constraint → one step)
+- **Structure** into the 7 sections below
 
-If a 9-section field would be empty because the preread doesn't have
-the raw material → the READ was incomplete, not the paper. Go back to
+If a section field would be empty because the preread doesn't have the
+raw material → the READ was incomplete, not the paper. Go back to
 Stage 2 and extend the relevant paper § block, rather than writing
 `[论文未披露]` prematurely. `[论文未披露]` is reserved for things the
 paper genuinely does not disclose, verified via Stage 2 coverage.
 
-### The 9 sections
+**What does NOT belong in notes** (these go to Stage 4 synthesis, never
+to notes):
+- "This paper vs paper X" comparison
+- Adversarial rebuttal of the paper's limitations
+- Ecosystem reality check ("but MHA is dead in 2024+")
+- Paradigm-shift positioning ("this reframes implicit HW → explicit SW")
+- Design-binding critique with cross-paper grounding
+- Hybrid / trade-off research directions informed by the note library
+- "根本性 vs 缓解性" discussion that requires seeing trends across papers
+
+If you notice such content emerging while writing notes, **save it to
+a scratch location** (e.g. inline TODO comment `<!-- STAGE4: ... -->`)
+and carry it into Stage 4 rather than inlining it into notes.
+
+### The 7 sections (paper-internal only)
 
 | # | Section | Contents | Hard minimum |
 |---|---|---|---|
@@ -346,10 +380,8 @@ paper genuinely does not disclose, verified via Stage 2 coverage.
 | 3 | **架构 / 方法图** | Mermaid first; drawio only for multi-page ladder or chip floorplan; SVG only for hero figure | ≥ 1 diagram |
 | 4 | **作者证明** | Notation table + each equation's physical meaning + monotonicity/convexity + first-order mapping from model → case-study numbers. If paper has no formal model, mark `**无形式化作者证明 — 仅实证**`. | 6 checks, see below |
 | 5 | **实验与数据** | 3–5 key figures/tables embedded **next to the text that discusses them** (not in a separate gallery section) | bold best per column in tables |
-| 6 | **论证链 + 可攻击面** | ≥3-step table (step / premise + citation / conclusion / evidence) with load-bearing markers; every limitation paired with 1 adversarial rebuttal attempt | ≥3 steps, not dichotomy |
+| 6 | **论证链 (paper-internal)** | ≥3-step table (step / premise + citation / conclusion / evidence) with load-bearing markers. **Pure reconstruction of the paper's own argument** — no attacks, no rebuttals, no ecosystem checks here (those are Stage 4). | ≥3 steps, not dichotomy |
 | 7 | **实现 cross-reference** | Any public code at all — paper's own repo, runtime it extends, baseline it compares against — MUST be walked. File:line citations required. | ≥ 1 code citation OR explicit `[实现未公开]` |
-| 8 | **生态位** | 1 paragraph: paradigm-shift positioning, adoption by downstream systems, forced bindings (what the method locks you into) | 1 paragraph |
-| 9 | **开放问题** | 3–5 items, ≥1 hybrid / adaptive / trade-off direction the paper didn't explore | ≥ 3 |
 
 ### 作者证明 — the 6 minimum checks (section §4)
 
@@ -370,24 +402,27 @@ If the paper genuinely has no formal model, write `**无形式化作者证明 �
 仅实证**` and state which aspects would have been model-verified if one
 existed. Never fabricate a model.
 
-### §6 construction rules
+### §6 construction rules (paper-internal argument chain only)
 
 - **Argument chain** must be a numbered table, not prose:
   `| step | premise (citing §/Table/Fig) | conclusion | evidence |`
 - Mark each step as **load-bearing** or **decorative**
 - If you can't express the paper's claim in ≥3 steps, you have read it
-  shallowly — go back.
-- For every critique / binding in the row "可攻击面": state which step's
-  premise it attacks. Unlabeled attacks land on strawmen.
-- **Ecosystem reality check** before committing any "若 X 失效" counterfactual:
-  (a) Term gate — is the paper's "X" the same as casual usage? (e.g.
-  "dense" in 2024+ papers means GQA/MLA-only, not MHA). (b) Plausibility
-  gate — can you name ≥2 production deployments in the last 12 months
-  where X is dominant or has a revival path? If not, drop the counterfactual.
-- Every binding gets an **adversarial rebuttal** attempt: is there a
-  configuration where this "limitation" actually makes the method *more*
-  suitable? Even if the rebuttal concludes "no, binding holds universally",
-  the attempt must be recorded.
+  shallowly — go back to Stage 2 and re-read.
+- Note where the paper itself already pre-empts common objections
+  (e.g. "Table 3 pre-empts 'isn't GQA enough?' by showing 33–60 Gbps").
+  This is still paper-internal (the author's own preemption) — not a
+  reader's attack.
+
+**What stays out of notes §6** (moves to Stage 4 synthesis):
+- Attacks on individual steps ("step 3's premise is questionable")
+- Ecosystem reality check on counterfactuals
+- Adversarial rebuttals to paper's limitations
+- Binding critiques that cite other papers
+
+Notes §6 is the setup for Stage 4's attack surface analysis. Write a
+clean, unambiguous reconstruction of what the paper argues — so that in
+Stage 4 you can point to specific steps as attack targets.
 
 ### Category-specific extensions
 
@@ -457,20 +492,71 @@ prose. Delete all matches before file write.
 
 ---
 
-## Stage 4 — PUBLISH
+## Stage 4 — CONNECT (cross-paper synthesis via `paper-synthesis` skill)
 
-1. **Incremental synthesis** — read `~/.cursor/skills/paper-synthesis/SKILL.md`
-   and run its "Incremental Update" procedure. Updates `related_paper_ids`
-   bidirectionally in papers.json.
+After `notes/{id}.md` is written, hand off to the `paper-synthesis`
+skill. Stage 4 has two outputs:
 
-2. **Render HTML** —
+1. **Graph update** (fast, automatic): `papers.json` `related_paper_ids`
+   is updated bidirectionally. This is the existing "Incremental Update"
+   mode of `paper-synthesis`.
+
+2. **Per-paper synthesis document** (the new v0.3 addition):
+   `~/.cursor/paper-db/knowledge/synthesis-{id}.md` — a review-style
+   document that places THIS paper in the context of the note library.
+
+**Procedure**: read `~/.cursor/skills/paper-synthesis/SKILL.md` and
+execute its "Per-Paper Synthesis" mode against the newly written notes.
+That skill owns:
+
+- Adversarial rebuttal rules (attack which step of §6 论证链)
+- Ecosystem reality check (term gate + plausibility gate on
+  counterfactuals)
+- Design-binding critique grounded in cross-paper evidence
+- Paradigm-shift positioning (implicit HW constraint → explicit SW
+  resource; roofline-axis reframing; etc.)
+- Trade-off axis identification and unexplored hybrid directions
+- 根本性 vs 缓解性 审视 (informed by seeing multiple papers' trends)
+- 对立观点主动搜索 (adversarial applicability check)
+- This paper vs related papers' delta analysis
+
+The synthesis skill reads the note library (not just the new paper's
+notes), so its output can cite other papers by ID and build influence
+chains.
+
+### What the synthesis document contains (skill spec, details in
+`paper-synthesis/SKILL.md`)
+
+Expected structure of `knowledge/synthesis-{id}.md`:
+
+1. **相关论文** — which papers in the DB are related, and why
+2. **本篇 vs 相关论文的 delta** — what's new, incremental, contradictory
+3. **可攻击面** — adversarial rebuttal against specific steps in notes §6
+4. **生态位** — paradigm-shift positioning, adoption evidence, forced
+   bindings (with cross-paper grounding)
+5. **未探索方向** — hybrid / adaptive / trade-off directions suggested
+   by patterns in the library
+
+### When to skip Stage 4
+
+If the note library is empty (this is the 1st paper), you may write a
+minimal synthesis document stating "first entry in the library; no
+cross-paper analysis possible yet; will be revisited when ≥2 papers
+in same category exist". Save it anyway — future Stage 4 runs may
+retroactively update it.
+
+---
+
+## Stage 5 — PUBLISH
+
+1. **Render HTML** —
    ```bash
    bash /apps/feiyue/upstream/zhaifeiyue.github.io/sync.sh
    ```
    sync.sh reads `notes/{id}.md` + `papers.json` and produces a **single
    HTML per paper** at `papers/{id}.html` that serves as both the full
    notes and the pedagogical reader (hero + TL;DR + Q1Q2Q3 at top, full
-   9 sections below, images inlined as base64, drawio embedded via
+   7 sections below, images inlined as base64, drawio embedded via
    lazy-load pattern). The separate `readers/{id}-reader.html` is
    deprecated in v0.2 — sync.sh auto-merges both roles.
 
@@ -481,7 +567,9 @@ prose. Delete all matches before file write.
 4. **Commit + push** —
    ```bash
    cd /apps/feiyue/upstream/zhaifeiyue.github.io
-   git add assets/{id}_*.drawio papers/{id}.html index.html knowledge-graph.html
+   git add assets/{id}_*.drawio papers/{id}.html index.html \
+           knowledge/synthesis-{id}.html knowledge/synthesis-{id}.md \
+           knowledge-graph.html
    # DO NOT use `git add -A` — stages unrelated work
    git diff --cached --name-only  # verify
    git commit -m "add: {title}"
@@ -490,15 +578,20 @@ prose. Delete all matches before file write.
 
 5. **Final completeness gate** —
    ```bash
-   ls ~/.cursor/paper-db/preread/{id}.md  # preread must exist
+   ls ~/.cursor/paper-db/preread/{id}.md     # Stage 2 output must exist
+   ls ~/.cursor/paper-db/notes/{id}.md       # Stage 3 output must exist
+   ls ~/.cursor/paper-db/knowledge/synthesis-{id}.md  # Stage 4 output must exist
    python3 ~/.cursor/paper-db/tools/check_paper_completeness.py {id} --strict
    ```
-   Preread presence is a soft signal — not yet enforced by the checker,
-   but its absence means Stage 2 was skipped, which is a process
-   failure even if Stage 3 output looks OK. Once the checker is updated
-   to enforce preread, it will also verify: (a) the preread's top-level
-   § count matches the paper's actual § count (±1), (b) every § block
-   has non-empty 逐段复述 / 章节小结 / 核心约束 sub-blocks.
+   Preread / notes / synthesis presence is a soft signal — not yet
+   enforced by the checker, but absence of any of them means the
+   corresponding stage was skipped, a process failure even if the final
+   HTML looks OK. Once the checker is updated, it will enforce:
+   (a) preread's top-level § count matches paper's actual § count (±1),
+   (b) every preread § block has non-empty 逐段复述 / 章节小结 / 核心约束,
+   (c) notes has 7 sections and none of them contain adversarial /
+   ecosystem / paradigm-shift content (those belong in synthesis),
+   (d) synthesis has ≥1 cited related paper OR explicit "first entry".
    If `check_paper_completeness.py` exits ≠ 0, fix every blocker before
    presenting the Final Output to the user. No exceptions.
 
@@ -518,7 +611,8 @@ prose. Delete all matches before file write.
 {from §2}
 
 ### Deep Analysis Highlights
-{3–5 sharpest insights from §4 作者证明 / §6 论证链 / §8 生态位}
+{3–5 sharpest insights from §4 作者证明 / §6 论证链 (paper-internal)
++ synthesis §3 可攻击面 / §4 生态位 (cross-paper)}
 
 ### Infrastructure Impact
 | Layer | Impact |
@@ -530,11 +624,14 @@ prose. Delete all matches before file write.
 | agent | ... |
 | code | ... |
 
-### Connections
+### Cross-Paper Connections (from Stage 4 synthesis)
 - Related: {ids}
-- Open: {questions}
+- Key delta: {this paper vs closest related paper, 1 sentence}
+- Open: {hybrid / trade-off direction from synthesis §5}
 
-> Notes: `~/.cursor/paper-db/notes/{id}.md`
+> Preread: `~/.cursor/paper-db/preread/{id}.md`
+> Notes (paper-internal): `~/.cursor/paper-db/notes/{id}.md`
+> Synthesis (cross-paper): `~/.cursor/paper-db/knowledge/synthesis-{id}.md`
 > HTML: https://zhaifeiyue.github.io/papers/{id}.html
 ```
 
