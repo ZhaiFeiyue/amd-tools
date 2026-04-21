@@ -10,16 +10,16 @@ description: >-
   category is automatically "code" and deep-code.md guide is used.
 ---
 
-# AI Infra Paper Reader (slim v0.2.1)
+# AI Infra Paper Reader (slim v0.3)
 
-Four stages. Nine notes sections. One HTML. No silent skips.
+Five stages. 7 notes sections. One HTML. No silent skips.
 
 ```
 ABSORB  →  READ  →  WRITE  →  CONNECT  →  PUBLISH
 fetch      preread   7-section    cross-paper    sync + commit
 classify   per §     notes        synthesis      + completeness
-extract    逐段+小结+  (paper-     (related +      gate
-figures    核心约束   internal    delta + 可攻击+
+extract    逐段+     (paper-      (related +     gate
+figures    小结       internal    delta + 可攻击+
                      only)       生态位, via
                                  paper-synthesis)
 ```
@@ -37,8 +37,85 @@ The rules that live in `paper-synthesis` (moved out of this skill in
 v0.3): adversarial rebuttal, ecosystem reality check, paradigm-shift
 positioning, design-binding critique (with cross-paper grounding),
 trade-off axis + unexplored hybrid, 根本性 vs 缓解性 审视, this paper
-vs other papers' delta. These CANNOT be written well from just one
-paper — they need the library.
+vs other papers' delta, era positioning (时代定位). These CANNOT be
+written well from just one paper — they need the library.
+
+---
+
+## Meta-rule 0: Content / Format 分工 (authoring discipline)
+
+**LLM writes content, scripts render format.**
+
+- **Content (LLM)**: all prose in notes & synthesis — TL;DR, Q1/Q2/Q3,
+  作者证明 解读, 论证链 reconstruction, figure descriptions, etc.
+  Written as plain markdown with `$...$` math and `> "..."` quotes.
+- **Format (scripts)**: HTML structure, CSS, KaTeX delimiter mapping,
+  markdown-to-HTML, base64 image inlining, site nav, drawio compaction.
+  Handled by `sync.sh` + `generate_html.py`.
+- **Never mix**: do NOT hand-write HTML in notes; do NOT hand-escape
+  KaTeX (use bare `$...$`); do NOT manually base64 images (write the
+  relative PNG path, sync.sh inlines). Mixing roles breaks the
+  separation and creates drift between notes and HTML renders.
+
+## Meta-rule 1: Progressive Disclosure (reader-facing structure)
+
+The final HTML (sync.sh output) has three reading layers:
+
+- **顶部扫读卡 (5 sec)** = TL;DR + Q1/Q2/Q3 → decides "keep reading?"
+- **中部理解 (30 sec)** = §3 架构图 + §5 experiments summary + §6
+  论证链 → "what does this paper propose and why?"
+- **底部精读 (5 min)** = §4 作者证明 + §7 实现 cross-reference +
+  full preread + synthesis → "how does it work, does it hold?"
+
+**各层不允许割裂**: every number / name / key concept mentioned in a
+top layer must be **expanded** in a lower layer. Counter-example: if
+TL;DR says "+54% throughput", Deep Analysis MUST explain which baseline
++ which regime + how measured; don't leave it dangling.
+
+## Meta-rule 2: Skill-Modification Protocol (rule-stating ≠ rule-following)
+
+When you modify THIS `SKILL.md` or any `deep-*.md` to add a new
+MANDATORY rule (new gate, new required section, new check), in the
+SAME turn you MUST:
+
+1. **Identify affected scope**: which Stage does the rule extend?
+   Which paper categories does that Stage apply to?
+2. **Find affected papers** — the N most recent papers in scope:
+   ```bash
+   python3 -c "
+   import json, os
+   db = json.load(open(os.path.expanduser('~/.cursor/paper-db/papers.json')))
+   papers = sorted(db['papers'], key=lambda p: p.get('date_read',''), reverse=True)
+   for p in papers[:3]:
+       print(p['id'], p.get('date_read'), p['category'])
+   "
+   ```
+3. **Retroactively re-validate** at least the most recent **1 paper**
+   in the affected scope (top 3 if rule is foundational like a Stage
+   2/3 structural change). For each: re-read the notes, fix every gap
+   the new rule exposes, re-run the completeness checker.
+4. **Justify any deferred re-validation**: if you cannot retroactively
+   fix older papers in this turn (e.g. >5 affected, scope too large),
+   explicitly tell the user which papers are now "skill-stale" and
+   propose a follow-up plan. Never silently leave older papers
+   inconsistent with the new rule.
+5. **Term-echo check**: every new rule name / section title / acronym
+   you introduce — ask "will an LLM echo this exact phrasing into
+   paper notes?". If yes, use a content-level name (e.g. "作者证明")
+   that IS the expected notes section title; avoid acronyms and
+   phase-tag suffixes (`(SJM)`, `(Stage 2b)`, etc.) that leak into
+   every paper.
+
+**Self-test before declaring a rule satisfied**: open the most recent
+affected paper's notes, grep for the new rule's required artifact
+(e.g. "核心技术壁垒", "时代定位"). If the grep returns 0 hits, you
+have NOT complied — you have only stated the rule.
+
+**Why this rule exists**: real failure mode is "I added a rule but
+didn't apply it to the paper I was working on". Prevents the stated-
+but-not-followed drift that accumulates across multiple skill edits.
+
+---
 
 **The READ-before-WRITE discipline** is the single most important
 architectural rule: LLMs cannot decide "what's important" while reading;
@@ -130,6 +207,32 @@ Run `~/.cursor/paper-db/tools/extract_figures.py {pdf} {out_dir}` (for
 PDFs) or download from `https://arxiv.org/html/{id}v{N}/x{N}.png` (for
 arXiv with HTML).
 
+**What to extract** — paper usually has more figures than you need in
+notes. Extract only the figures that are likely to be referenced in
+notes, by this priority order:
+
+1. **架构图 / 系统总览图** (paper's "灵魂图" — usually Figure 1 or 2)
+2. **核心原理图** (mechanism, data flow, pipeline, scheduling diagram)
+3. **算法伪代码** (Algorithm 1, 2 — reproduce as text AND as image if
+   figure-form)
+4. **关键对比实验结果图** (main result bar chart / line chart / heatmap)
+5. **消融实验图** (component contribution)
+6. **Motivation 图** (paper's opening bottleneck-analysis / profiling)
+
+Skip: appendix figures, supplementary small-scale charts, figures not
+relevant to main contributions.
+
+**1:1 figure-to-description rule**: every extracted PNG must have a
+corresponding `### Figure N:` heading in preread § 逐段复述 (Stage 2)
+AND — if the figure is kept — in notes § (Stage 3). Orphan PNGs
+(extracted but never described) are either:
+- Dropped at Stage 3 if not important enough to describe, OR
+- Forced into a description inline — don't ship unused PNGs.
+
+Conversely, every `### Figure N:` heading in preread / notes must
+reference a PNG that exists on disk. The completeness checker fails
+on dangling references.
+
 **Closed-loop quality gate**: after extraction,
 1. Tool's `EXTRACTION SUMMARY` must show N extracted figures matching the
    N captions found. If `N=0` but captions exist, the tool failed silently
@@ -137,6 +240,8 @@ arXiv with HTML).
 2. `Read` every output PNG. Each must show: (a) caption included, (b) full
    figure content, (c) no body-text leakage, (d) no sub-figure cut off.
 3. Each PNG > 5 KB.
+4. **Count match**: final PNG count = preread `### Figure N:` heading
+   count (orphans dropped, or descriptions added).
 
 ---
 
@@ -360,6 +465,28 @@ own words are allowed only as connective scaffolding.
     $p$, why this exact form
   - **Tag**: `[load-bearing]` (reused downstream) vs `[decorative]`
     (scene-setting). Unsure → `[load-bearing]` by default.
+
+  **LaTeX notation rules** (MANDATORY — KaTeX rendering depends on
+  these; Unicode math symbols render as ugly monospace):
+
+  | Use | NOT | Example |
+  |---|---|---|
+  | `\frac{a}{b}` | `a/b` for complex fractions | `\frac{QK^\top}{\sqrt{d_k}}` |
+  | `\sqrt{x}` | `sqrt(x)` or `√x` | `\sqrt{d_k}` |
+  | `\sum_{i=1}^{N}` | `Σ` or `sum` | `\sum_{i=1}^{N} y_i \log p_i` |
+  | `\prod` | `Π` | — |
+  | `\mathbb{E}[X]` | `E[X]` (except when matching paper's exact notation) | `\mathbb{E}[L \mid L > t]` |
+  | `\text{softmax}` | `softmax` (bare identifier inside math) | `\text{softmax}(QK^\top / \sqrt{d_k})` |
+  | `\operatorname{...}` for custom operators | — | `\operatorname{LayerNorm}(x)` |
+  | `^\top` for transpose | `^T` (ugly) | `QK^\top` |
+  | `\cdot` for dot product | `*` or `.` | `a \cdot b` |
+  | `x_{ij}` / `x^{n+1}` with braces for multi-char scripts | `x_ij` / `x^n+1` | — |
+  | `\alpha \beta \gamma \theta \lambda \sigma \phi` | `α β γ θ λ σ φ` | — |
+  | `\leq \geq \neq \approx` | `<= >= != ≈` | — |
+  | Display math in its own `$$...$$` block | Display math inline `$...$` | — |
+
+  Inline `$...$` only for single-symbol references (`$l$`, `$\Phi_{kv}$`);
+  full equations always in `$$...$$` blocks.
 
 - **Every table**: reproduce as markdown table, **all rows and
   columns**, actual cells. "Paper shows a comparison" is insufficient.
@@ -589,6 +716,52 @@ for the non-obvious trick the paper understates. Never fake a barrier.
 
 ---
 
+### Algorithm / pseudocode output format (section §5 or §3)
+
+When the paper contains an Algorithm block (Algorithm 1, Algorithm 2,
+...), each Algorithm in notes must have **all 5 elements**:
+
+1. **Algorithm ID & title** — verbatim: `**Algorithm 1: Inter-PE Scheduling**`
+2. **Complete pseudocode** — reproduce in a markdown ` ```pseudocode `
+   block, exactly as the paper wrote it. Don't paraphrase; keep the
+   paper's naming (even if awkward — that's what the code will match).
+3. **逐行解读** — inline Chinese comments explaining each key line:
+   what it does and why. Skip boilerplate (loop variables,
+   obvious operations).
+4. **复杂度分析** — time / space complexity when applicable (e.g.
+   "O(N log N) per iteration, O(N) memory for the bucket table").
+5. **与代码的对应** — if source code is public, map pseudocode lines
+   to actual implementation: `L3-4 ↔ scheduler.py:42-58`. If code
+   not public, note which runtime (vLLM / CUTLASS / etc.) has the
+   closest equivalent.
+
+Position: algorithms usually live in §5 (实验与数据 / method-detail)
+or §3 (架构 / 方法图) depending on whether the paper treats them as
+part of the method diagram or as standalone detail. Follow the paper's
+own placement.
+
+### 关键实现细节 (Key Technical Details) — add 1–2 per paper
+
+Every paper has **1–2 implementation details that are critical but
+easy to miss** in a summary-level read: a special loss term, a data
+processing trick, an unusual hyperparameter default, a custom schedule,
+a manual kernel fuse. Surface them explicitly, usually in §7 (实现
+cross-reference) as a short bulleted list.
+
+Examples:
+- GRPO: group size $G$ is not PPO's clip ratio — it shapes the
+  variance of advantage estimates; `G=8` typical, `G=64` for math RL
+- FlashAttention-3: the block-skew (K-block vs V-block misalignment)
+  hides a 2× speedup on H100 that the headline FLOPs metric misses
+- PrfaaS: "layer-wise prefill pipelining" is NOT standard vLLM
+  behavior; without it, Eq.3 devolves to harmonic mean and the entire
+  scheduler's `min()` formulation breaks
+
+**Relationship to §4.6 核心技术壁垒**: 关键实现细节 is the list of
+"easy-to-miss tricks" (multiple allowed); 核心技术壁垒 is **the ONE**
+hardest-to-replicate insight. Overlap is OK — if one of your technical
+details IS the barrier, cross-reference it.
+
 ### 作者证明 — the 6 minimum checks (section §4)
 
 1. Notation table reproduced (not just referenced as "see Table N")
@@ -706,18 +879,38 @@ explicitly decided a redraw is warranted):
 **Banned everywhere**: ASCII box art (`┌─ │ ─┐`), code blocks as
 architecture substitute. See `diagram-tool-choice.md` for templates.
 
-### Content hygiene
+### Content hygiene — Pre-Save Self-Check (MANDATORY before file write)
 
-**Swap-paper-name test**: for every paragraph you write, ask "if I
-replaced this paper's name with 'X', does the paragraph still make
-sense for any other paper?" If yes, it's skill-leakage — it belongs in
-the skill or `incidents.md`, NOT in the paper's notes.
+**Step 1 — Swap-paper-name test**: for every paragraph you wrote, ask
+"if I replaced this paper's name with 'X', does the paragraph still
+make sense for any other paper?" If yes, it's skill-leakage — the
+content belongs in SKILL.md / `deep-*.md` / `incidents.md`, NOT in
+this paper's notes.
 
-Before saving, scan your draft for these leak patterns: rule-tag
-suffixes in section titles (e.g. `### 作者证明 (SJM)`), citations of
-SKILL.md / deep-*.md, "Inherited universal rule" callouts, "本笔记
-采用 X 结构" meta, `(Phase 2b)` parentheticals, tool-choice rationale
-prose. Delete all matches before file write.
+**Step 2 — Leak-pattern scan**: grep your draft for these 8 patterns.
+Every match is a blocker; delete or rewrite before save.
+
+| # | Leak pattern | Bad example (in notes) | Fix |
+|---|---|---|---|
+| 1 | Rule-tag / acronym in section title | `### 作者证明 (SJM)`, `## Logic Flow (Phase 2b)` | Drop the parenthetical: `### 作者证明`, `## Logic Flow` |
+| 2 | Skill-doc citation in prose | "本节依照 SKILL.md Stage 2b", "per deep-framework.md §12", "按 skill 要求执行" | Remove the citation; keep the content |
+| 3 | Inheritance / base-class callout | "> 🚨 **Inherited universal rule** ...", "继承自 Phase 2 基类" | Delete the entire callout block |
+| 4 | Trigger / classification meta-block | "📌 **触发说明**: 本 paper 归类 framework 但属于 hardware-proximal 子集..." | Delete; classification info lives in papers.json, not notes |
+| 5 | Tool-choice rationale in notes | "本笔记 2026-04-21 改用 Mermaid 因为...", "Mermaid 的优势..." | Delete; tool rationale lives in `diagram-tool-choice.md` |
+| 6 | deep-*.md principle restatement | "图里有的不写字，字里有的不贴码", "文字说明 = 架构图的 caption" | Delete; those are skill principles, not paper content |
+| 7 | Self-referential format description | "本节只写 X 不讨论 Y", "本笔记 deep read 采用 Z 结构" | Delete the meta; let structure speak for itself |
+| 8 | Skill-rule acronym naturally echoed from the skill | `(SJM)`, `(Phase 2b)`, `(hybrid disambiguation — Phase 3 Step 4)` | Drop parenthetical; if the concept needs naming, use a content-level name |
+
+**Step 3 — Completeness checker scan (belt-and-suspenders)**:
+```bash
+python3 ~/.cursor/paper-db/tools/check_paper_completeness.py {id} --strict
+```
+The checker has a `_SKILL_LEAK_PHRASES` list that catches patterns 1–8.
+If it flags anything, loop back to Step 1 on the flagged content.
+
+**Why this exists**: post-hoc scanner alone = whack-a-mole; self-check
+at generation time catches issues at root. See `incidents.md`
+2026-04-21I for the original incident that motivated the 8-pattern list.
 
 ---
 
